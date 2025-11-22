@@ -17,7 +17,7 @@ app.use(express.static(join(root, 'public')));
 
 // Middleware para verificar token (excepto rutas públicas)
 const verificarToken = (req, res, next) => {
-    const rutasPublicas = ['/', '/status', '/tasks'];
+    const rutasPublicas = ['/', '/status', '/tasks', '/power', '/modificar'];
     if (rutasPublicas.includes(req.path)) {
         return next();
     }

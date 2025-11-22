@@ -13,7 +13,8 @@ const fh = (f) => {
 } 
 
 const pwr = async (pw, nombre, ip) => {
-    const res = await fetch(`${API_PREFIX}/power?tipo=${pw}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
+    const tokenParam = API_PREFIX ? '&token=df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2' : '';
+    const res = await fetch(`${API_PREFIX}/power?tipo=${pw}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}${tokenParam}`)
     const rspta = await res.json()
     return rspta;
 }
@@ -271,7 +272,8 @@ document.getElementById("aplicarSsd").addEventListener("click", async () => {
 });
 
 const modificar = async (tipo, valor, nombre, ip) => {
-    const res = await fetch(`${API_PREFIX}/modificar?tipo=${tipo}&valor=${valor}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
+    const tokenParam = API_PREFIX ? '&token=df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2' : '';
+    const res = await fetch(`${API_PREFIX}/modificar?tipo=${tipo}&valor=${valor}&nombre=${nombre}&ip=${ip}${tokenParam}`)
     const rspta = await res.json()
     return rspta;
 }
