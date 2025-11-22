@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Servidor EstudioMQ</title>
+    <!-- FontAwesome -->
+    <script
+      src="https://kit.fontawesome.com/c6d95e531a.js"
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      /* CSS styles for the dashboard */
+      body {
+        background-color: #f1dddd;
+        background-image: linear-gradient(to bottom right, #ffffff, #f2f2f2);
+        font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+          "Lucida Sans", Arial, sans-serif;
+        margin: 25px;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      h1 {
+        color: #333333;
+        text-align: center;
+        margin: 30px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 10px;
+        color: #635f5f;
+        font-size: large;
+      }
+
+      span {
+        display: block;
+        margin-bottom: 10px;
+        color: #635f5f;
+        font-size: larger;
+        font-weight: bold;
+      }
+
+  
+      button {
+        background-color: #ff66005b;
+        color: #ffffff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: rgb(207, 203, 203);
+        color: black
+      }
+
+      .status {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-gap: 20px;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+        border: 5px solid #b3adaa5b;
+        border-radius: 25px;
+      }
+
+      .estadoOn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #4caf50;
+        padding: 15px;
+        border-radius: 15px;
+        color: white;
+        font-size: larger;
+      }
+
+      .estadoOff {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background-color: #f44336;
+        padding: 15px;
+        border-radius: 15px;
+        color: white;
+        font-size: larger;
+      }
+
+      .botones {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        color: white;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        color: white;
+        padding: 14px 20px;
+        margin: 8px 0;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        width: 100%;
+        font-size: large;
+        font-weight: bold;
+        font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+          "Lucida Sans", Arial, sans-serif;
+        display: flex;
+        gap: 30px;
+      }
+
+      .encender {
+        background-color: #4caf50;
+      }
+      .apagar {
+        background-color: #f44336;
+      }
+      .reiniciar {
+        background-color: rgba(236, 214, 19, 0.863);
+      }
+
+      .actualizar {
+        background-color: blue;
+      }
+
+      .tableContainer {
+        display: block;
+        overflow: auto;
+        width: 100%;
+      }
+
+      .tableContainer table {
+        max-width: 100%;
+        width: 100%;
+      }
+
+      .fila{
+        background-color: #b3adaa5b;
+        color: black;
+        font-weight: bold;
+        padding: 15px;
+        margin: 10px;
+        border-color: 1px solid black;
+      }
+
+      .tabla {
+        border: 2px solid black;
+        border-radius: 20px;
+      }
+
+      .config {
+        background-color: #ffffff;
+        padding: 25px 5px;
+        border-radius: 5px;
+        margin: 25px 5px;
+        display: flex;
+        flex-direction: column;
+        gap: 0px;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+        border: 5px solid #b3adaa5b;
+        border-radius: 25px;
+      }
+
+      .config2 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        grid-gap: 20px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .select {
+        padding: 14px 20px;
+        margin: 8px 0;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        width: 100%;
+        font-size: large;
+        font-weight: bold;
+        font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+          "Lucida Sans", Arial, sans-serif;       
+      }
+
+      .btnAplicar {
+        color: white;
+        padding: 14px;
+        margin: 4px 0;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        font-size: medium;
+        font-weight: bold;
+        font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+          "Lucida Sans", Arial, sans-serif;
+        display: flex;
+        gap: 10px;
+      }
+
+      .loader-container {
+        display: none; /* Oculto inicialmente */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(211, 211, 211, 0.8); /* Fondo gris claro */
+        z-index: 9999; /* Asegura que el loader esté por encima de todo */
+        justify-content: center;
+        align-items: center;
+      }
+
+      .spinner {
+        border: 16px solid #f3f3f3; /* Color de fondo del spinner */
+        border-top: 16px solid #3498db; /* Color del borde superior */
+        border-radius: 50%;
+        width: 120px;
+        height: 120px;
+        animation: spin 2s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SERVIDOR</h1>
+    <div class="status">
+      <label>Nombre:</label>
+      <span id="nombre"></span>
+      <label style="display: flex; justify-content: start; align-items: center;">Estado:</label>
+      <div id="estado"></div>
+      <label>Cant. Procesadores:</label>
+      <span id="cant"></span>
+      <label>Memoria:</label>
+      <span id="memoria"></span>
+      <label>Tamaño SSD:</label>
+      <span id="ssd"></span>
+      <label>Dirección IP:</label>
+      <span id="ip"></span>
+    </div>
+    <div class="botones">
+      <button class="btn encender" id="encender"><i class="fa fa-power-off fa-1x"></i>Encender</button>
+      <button class="btn apagar" id="apagar"><i class="fa fa-power-off fa-1x"></i>Apagar</button>
+      <button class="btn reiniciar" id="reiniciar"><i class="fa fa-power-off fa-1x"></i>Reiniciar</button>
+      <button class="btn actualizar"  id="actualizar"><i class="fa fa-refresh fa-1x"></i>Actualizar Datos</button>   
+    </div>
+    <div class="config">
+      <h1>CONFIGURACIÓN SERVIDOR</h1>
+      <h2>Utilizar con Precaución</h2>
+      <label>Procesadores: </label>
+      <div class="config2">
+        <select class="select" id="procesadores" style="width: 100%;">
+          <option value="1T">1 Procesador</option>
+          <option value="2T">2 Procesadores</option>
+          <option value="4T">4 Procesadores</option>
+          <option value="6T">6 Procesadores</option>
+          <option value="8T">8 Procesadores</option>
+          <option value="12T">12 Procesadores</option>
+          <option value="16T">16 Procesadores</option>
+          <option value="20T">20 Procesadores</option>
+          <option value="24T">24 Procesadores</option>
+          <option value="28T">28 Procesadores</option>
+          <option value="32T">32 Procesadores</option>
+          <option value="36T">36 Procesadores</option>
+          <option value="40T">40 Procesadores</option>
+          <option value="48T">48 Procesadores</option>
+          <option value="56T">56 Procesadores</option>
+          <option value="64T">64 Procesadores</option>
+          <option value="72T">72 Procesadores</option>
+          <option value="88T">88 Procesadores</option>
+          <option value="104T">104 Procesadores</option>
+        </select>
+        <button class="btnAplicar encender" id="aplicarProc"><i class="fa fa-check-square fa-1x"></i>Aplicar</button>
+      </div>
+      <br>
+      <br>
+      <label>Memoria RAM: </label>
+      <div class="config2">
+        <select class="select" id="memoriaRam" style="width: 100%;">
+          <option value="256">256 Mb</option>
+          <option value="512">512 Mb</option>
+          <option value="1024">1 Gb</option>
+          <option value="2048">2 Gb</option>
+          <option value="3072">3 Gb</option>
+          <option value="4096">4 Gb</option>
+          <option value="6144">6 Gb</option>
+          <option value="8192">8 Gb</option>
+          <option value="10240">10 Gb</option>
+          <option value="12288">12 Gb</option>
+          <option value="16384">16 Gb</option>
+          <option value="24576">24 Gb</option>
+          <option value="32768">32 Gb</option>
+          <option value="49152">48 Gb</option>
+          <option value="65536">64 Gb</option>
+          <option value="98304">96 Gb</option>
+          <option value="131072">128 Gb</option>
+          <option value="200704">196 Gb</option>
+          <option value="262144">256 Gb</option>
+          <option value="327680">320 Gb</option>
+          <option value="393216">384 Gb</option>
+          <option value="458752">448 Gb</option>
+          <option value="524288">512 Gb</option>
+        </select>
+        <button class="btnAplicar encender" id="aplicarRam"><i class="fa fa-check-square fa-1x"></i>Aplicar</button>
+      </div>
+      <br>
+      <br>
+      <label>Disco SSD: </label>
+      <div class="config2">
+        <select class="select" id="disco" style="width: 100%;">
+          <option value="250">250 GB</option>
+          <option value="300">300 GB</option>
+          <option value="350">350 GB</option>
+          <option value="400">400 GB</option>
+          <option value="450">450 GB</option>
+          <option value="500">500 GB</option>
+          <option value="600">600 GB</option>
+          <option value="700">700 GB</option>
+          <option value="800">800 GB</option>
+          <option value="1000">1000 GB</option>
+          <option value="1500">1500 GB</option>
+          <option value="2000">2000 GB</option>
+        </select>
+        <button class="btnAplicar encender" id="aplicarSsd"><i class="fa fa-check-square fa-1x"></i>Aplicar</button>
+    </div>
+  </div>
+
+    <h1>TAREAS</h1>
+    <div class="tableContainer">
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th class="fila">Fecha</th>
+            <th class="fila">Tarea</th>
+            <th class="fila">Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tareas">
+          
+        </tbody>
+      </table>
+    </div>
+
+    <h1>REGISTRO</h1>
+    <div class="tableContainer">
+      <table class="tabla responsive">
+        <thead>
+          <tr>
+            <th class="fila">Fecha</th>
+            <th class="fila">Tarea</th>
+            <th class="fila">Ident.</th>
+            <th class="fila">Resultado</th>
+          </tr>
+        </thead>
+        <tbody id="registro">          
+        </tbody>
+      </table>
+    </div>
+    <div id="loader" class="loader-container">
+      <div class="spinner"></div>
+    </div>    
+    <script type="text/javascript" src="index.js"></script>
+    <!-- <script type="text/javascript" src="sa.js"></script> -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </body>
+  </html>
