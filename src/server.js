@@ -5,7 +5,6 @@ import express from 'express';
 import { join } from 'path';
 const root = process.cwd();
 import { statusServer, pedirTasks, pwr, modificar } from "./controllers/kamatera.js";
-import { agendar } from "./tareas/agendar.js";
 import { registrar, pedirRegistro } from "./tareas/registro.js";
 
 config();
@@ -80,10 +79,13 @@ app.get('/modificar', async (req, res) => {
 });
 
 // Solo ejecutar agendar() y listen() en desarrollo local
-if (process.env.NODE_ENV !== 'production') {
-    agendar();
-    app.listen(port, () => {
-        console.log(`Servidor Express escuchando en http://localhost:${port}`);
+if (process.env.VERCEL !== '1') {
+    // Importar dinámicamente agendar solo en desarrollo
+    import('./tareas/agendar.js').then(({ agendar }) => {
+        agendar();
+        app.listen(port, () => {
+            console.log(`Servidor Express escuchando en http://localhost:${port}`);
+        });
     });
 }
 
