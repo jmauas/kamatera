@@ -1,4 +1,3 @@
-import { pwr } from "../../src/controllers/kamatera.js";
 import { registrar } from "../../src/tareas/registro.js";
 
 // Función auxiliar para verificar el token de seguridad
@@ -16,27 +15,42 @@ export async function GET(request) {
         });
     }
 
-    // Responder inmediatamente y ejecutar en background
-    setImmediate(async () => {
+    // Ejecutar la operación SIN AWAIT para no esperar
+    const url = 'https://console.kamatera.com/service';
+    
+    // Iniciar el proceso pero NO esperar
+    (async () => {
         try {
-            const res = await pwr('on');
-            if (res.errors) {
-                await registrar('ENC. AUTO.', 0, 0, res.errors[0].info, '', '').catch(err => 
-                    console.error('Error al registrar:', err)
-                );
-            } else {
-                await registrar('ENC. AUTO.', 0, 0, 'OK', '', '').catch(err => 
-                    console.error('Error al registrar:', err)
-                );
-            }
+            // Autenticación
+            const authRes = await fetch(`${url}/authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clientId: process.env.CLIENT_ID,
+                    secret: process.env.API_SECRET
+                })
+            });
+            const { authentication } = await authRes.json();
+            
+            // Encender servidor
+            await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authentication}`
+                },
+                body: JSON.stringify({ power: 'on' })
+            });
+            
+            // Registrar éxito
+            await registrar('ENC. AUTO.', 0, 0, 'OK', '', '').catch(console.error);
         } catch (error) {
             console.error('Error en cron encendido:', error);
-            await registrar('ENC. AUTO.', 0, 0, `Error: ${error.message}`, '', '').catch(err => 
-                console.error('Error al registrar:', err)
-            );
+            await registrar('ENC. AUTO.', 0, 0, `Error: ${error.message}`, '', '').catch(console.error);
         }
-    });
+    })();
 
+    // Responder INMEDIATAMENTE sin esperar
     return new Response(JSON.stringify({ 
         ok: true, 
         mensaje: 'Encendido iniciado',

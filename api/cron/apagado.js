@@ -1,4 +1,3 @@
-import { modificar } from "../../src/controllers/kamatera.js";
 import { registrar } from "../../src/tareas/registro.js";
 
 // Función auxiliar para verificar el token de seguridad
@@ -16,31 +15,46 @@ export async function GET(request) {
         });
     }
 
-    const url = new URL(request.url);
-    const procesadores = url.searchParams.get('cpu') || '8';
+    const urlParams = new URL(request.url);
+    const procesadores = urlParams.searchParams.get('cpu') || '8';
+    const cpuValue = procesadores + 'T';
     
-    // Responder inmediatamente y ejecutar en background
-    setImmediate(async () => {
+    // Ejecutar la operación SIN AWAIT para no esperar
+    const url = 'https://console.kamatera.com/service';
+    
+    // Iniciar el proceso pero NO esperar
+    (async () => {
         try {
-            const res = await modificar('procesador', procesadores + 'T');
+            // Autenticación
+            const authRes = await fetch(`${url}/authenticate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clientId: process.env.CLIENT_ID,
+                    secret: process.env.API_SECRET
+                })
+            });
+            const { authentication } = await authRes.json();
             
-            if (res.errors) {
-                await registrar('APAG. AUTO.', 0, 0, res.errors[0].info, '', '').catch(err => 
-                    console.error('Error al registrar:', err)
-                );
-            } else {
-                await registrar('APAG. AUTO.', 0, 0, 'OK', '', '').catch(err => 
-                    console.error('Error al registrar:', err)
-                );
-            }
+            // Modificar CPU (apagar)
+            await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authentication}`
+                },
+                body: JSON.stringify({ cpu: cpuValue })
+            });
+            
+            // Registrar éxito
+            await registrar('APAG. AUTO.', 0, 0, 'OK', '', '').catch(console.error);
         } catch (error) {
             console.error('Error en cron apagado:', error);
-            await registrar('APAG. AUTO.', 0, 0, `Error: ${error.message}`, '', '').catch(err => 
-                console.error('Error al registrar:', err)
-            );
+            await registrar('APAG. AUTO.', 0, 0, `Error: ${error.message}`, '', '').catch(console.error);
         }
-    });
+    })();
 
+    // Responder INMEDIATAMENTE sin esperar
     return new Response(JSON.stringify({ 
         ok: true, 
         mensaje: `Apagado iniciado (${procesadores} CPU)`,
