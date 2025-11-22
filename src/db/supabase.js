@@ -29,15 +29,10 @@ export const supabase = new Proxy({}, {
  * @returns {Promise<Object>} - Resultado de la inserción
  */
 export async function insertarRegistro(registro) {
-    // Ajustar fecha a la zona horaria de Argentina (UTC-3)
-    const ahora = new Date();
-    const offsetArgentina = -3 * 60; // UTC-3 en minutos
-    const fechaArgentina = new Date(ahora.getTime() + offsetArgentina * 60 * 1000);
-    
     const { data, error } = await supabase
         .from('registros')
         .insert([{
-            fecha: fechaArgentina.toISOString(),
+            fecha: new Date().toISOString(),
             evento: registro.evento,
             res: registro.res,
             nombre: registro.nombre || null,

@@ -5,16 +5,8 @@ let long = 0;
 
 const fh = (f) => {
     const d = new Date(f);
-    // La fecha ya viene ajustada desde el backend, solo formateamos
-    return d.toLocaleString('es-AR', { 
-        timeZone: 'America/Argentina/Buenos_Aires',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-    });
+    // Mostrar en hora local del navegador
+    return d.toLocaleString();
 } 
 
 const pwr = async (pw, nombre, ip) => {
