@@ -153,7 +153,10 @@ document.getElementById("apagar").addEventListener("click", async () => {
         Nadie podrá acceder a el. ¿Estás seguro?`);
     if (data.nombre && data.nombre != '') {
         showLoader();
-        const res = await pwr("off", data.nombre, data.ip);
+        // Obtener la cantidad actual de CPUs
+        const cpuActual = document.getElementById("cant").innerText;
+        // Apagar usando modificar con CPU + T (throttle)
+        const res = await modificar("procesador", cpuActual + "T", data.nombre, data.ip);
         if (res.ok) {
             Swal.fire("El servidor se ha apagado correctamente", {
                 icon: "success",
