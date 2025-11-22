@@ -1,13 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+// Inicializar cliente de Supabase de forma lazy
+let supabaseInstance = null;
 
-if (!supabaseUrl || !supabaseKey) {
-    console.error('Error: SUPABASE_URL y SUPABASE_KEY no están configurados');
+function getSupabaseClient() {
+    if (!supabaseInstance) {
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_KEY;
+
+        if (!supabaseUrl || !supabaseKey) {
+            throw new Error('Error: SUPABASE_URL y SUPABASE_KEY no están configurados en las variables de entorno');
+        }
+
+        supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabaseInstance;
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = new Proxy({}, {
+    get(target, prop) {
+        return getSupabaseClient()[prop];
+    }
+});
 
 /**
  * Inserta un nuevo registro en la base de datos

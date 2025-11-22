@@ -1,3 +1,4 @@
+import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
@@ -5,6 +6,9 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Cargar variables de entorno
+config();
 
 // Configuración de Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
