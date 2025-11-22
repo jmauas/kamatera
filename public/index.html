@@ -137,6 +137,25 @@
         background-color: blue;
       }
 
+      .btnConfiguracion {
+        background-color: #ff9800;
+        color: white;
+        padding: 14px 20px;
+        margin: 20px 0;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        font-size: large;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .config-hidden {
+        display: none;
+      }
+
       .tableContainer {
         display: block;
         overflow: auto;
@@ -263,7 +282,12 @@
       <button class="btn reiniciar" id="reiniciar"><i class="fa fa-power-off fa-1x"></i>Reiniciar</button>
       <button class="btn actualizar"  id="actualizar"><i class="fa fa-refresh fa-1x"></i>Actualizar Datos</button>   
     </div>
-    <div class="config">
+    
+    <button class="btnConfiguracion" id="btnMostrarConfig">
+      <i class="fa fa-cog fa-1x"></i>CONFIGURACIÓN
+    </button>
+    
+    <div class="config config-hidden" id="configDiv">
       <h1>CONFIGURACIÓN SERVIDOR</h1>
       <h2>Utilizar con Precaución</h2>
       <label>Procesadores: </label>

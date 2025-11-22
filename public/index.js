@@ -101,6 +101,42 @@ window.onload = async () => {
     hideLoader();
 };
 
+document.getElementById("btnMostrarConfig").addEventListener("click", async () => {
+    const { value: password } = await Swal.fire({
+        title: "Acceso a Configuración",
+        input: "password",
+        inputLabel: "Ingrese la contraseña",
+        inputPlaceholder: "Contraseña",
+        icon: "question",
+        showCancelButton: true,
+        cancelButtonText: "Cancelar",
+        confirmButtonText: "Confirmar",
+        inputValidator: (value) => {
+            if (!value) {
+                return "Debe ingresar una contraseña";
+            }
+        }
+    });
+
+    if (password === "1426") {
+        document.getElementById("configDiv").classList.remove("config-hidden");
+        document.getElementById("btnMostrarConfig").style.display = "none";
+        Swal.fire({
+            icon: "success",
+            title: "Acceso permitido",
+            text: "Ahora puede configurar el servidor",
+            timer: 2000,
+            showConfirmButton: false
+        });
+    } else if (password) {
+        Swal.fire({
+            icon: "error",
+            title: "Contraseña incorrecta",
+            text: "No tiene permisos para acceder a la configuración"
+        });
+    }
+});
+
 const swal = async (text) => {
     const val = localStorage.getItem("nombre");
     const ipAPI = "//api.ipify.org?format=json";
