@@ -117,6 +117,9 @@ export const apagadoCompleto = async (cpuValue = '8T') => {
     resultados.cpu.mensaje = error.message;
   }
   
+  // Esperar 20 segundos antes de enviar el apagado
+  await new Promise(resolve => setTimeout(resolve, 20000));
+  
   // Paso 2: SIEMPRE ejecutar apagado, independientemente del resultado del CPU
   try {
     const powerController = new AbortController();

@@ -1,5 +1,7 @@
 # Configuración de Cron Jobs con cron-job.org
-
+https://console.cron-job.org/dashboard
+usuario j@estudiomq.com.ar
+clave con 1
 Este documento describe cómo configurar las tareas programadas usando cron-job.org (gratis e ilimitado).
 
 ## 📋 Prerequisitos
@@ -127,7 +129,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 
 #### 📅 **Job 8: Apagado Sábado 11:00 PM (Segunda fase)**
 
-- **Title:** `Apagado Sábado 11:00 PM - Fase 1`
+- **Title:** `Apagado Sábado 11:00 PM - Fase 2`
 - **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
 - **Schedule (cron):** `0 23 * * 6`
 - **Request settings:**
@@ -142,7 +144,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 
 #### 📅 **Job 9: Apagado Sábado 11:59 PM (Tercera fase)**
 
-- **Title:** `Apagado Sábado 11:59 PM - Fase 2`
+- **Title:** `Apagado Sábado 11:59 PM - Fase 3`
 - **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
 - **Schedule (cron):** `59 23 * * 6`
 - **Request settings:**
@@ -172,7 +174,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 
 #### 📅 **Job 11: Apagado Domingo 11:00 PM (Segunda fase)**
 
-- **Title:** `Apagado Domingo 11:00 PM - Fase 1`
+- **Title:** `Apagado Domingo 11:00 PM - Fase 2`
 - **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
 - **Schedule (cron):** `0 23 * * 0`
 - **Request settings:**
