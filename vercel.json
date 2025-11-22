@@ -15,35 +15,39 @@
   "crons": [
     {
       "path": "/api/cron/encendido",
-      "schedule": "0 9 * * 1-5"
+      "schedule": "0 12 * * 1-5"
     },
     {
       "path": "/api/cron/apagado?cpu=8",
-      "schedule": "0 23 * * 0-4"
+      "schedule": "0 2 * * 1-5"
     },
     {
       "path": "/api/cron/apagado?cpu=8",
-      "schedule": "59 23 * * 0-4"
+      "schedule": "59 2 * * 1-5"
     },
     {
       "path": "/api/cron/apagado?cpu=4",
-      "schedule": "0 23 * * 5"
+      "schedule": "0 2 * * 6"
     },
     {
       "path": "/api/cron/apagado?cpu=4",
-      "schedule": "59 23 * * 5"
+      "schedule": "59 2 * * 6"
     },
     {
       "path": "/api/cron/encendido",
-      "schedule": "0 10 * * 6"
+      "schedule": "0 13 * * 6"
     },
     {
       "path": "/api/cron/apagado?cpu=4",
-      "schedule": "30 20 * * 6"
+      "schedule": "30 23 * * 6"
     },
     {
       "path": "/api/cron/apagado?cpu=8",
-      "schedule": "0 20 * * 0"
+      "schedule": "0 23 * * 0"
+    },
+    {
+      "path": "/api/cron/apagado?cpu=8",
+      "schedule": "59 2 * * 0"
     }
   ]
 }
