@@ -50,8 +50,8 @@ export default async function handler(req, res) {
                 errorCpu = error.message;
             }
             
-            // Esperar 20 segundos antes de enviar el apagado
-            await new Promise(resolve => setTimeout(resolve, 20000));
+            // Esperar 30 segundos antes de enviar el apagado
+            await new Promise(resolve => setTimeout(resolve, 30000));
             
             // SIEMPRE ejecutar apagado, independientemente del resultado de CPU
             try {
