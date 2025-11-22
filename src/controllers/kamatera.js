@@ -83,6 +83,75 @@ export const pwr = async (tipo) => {
   }
 }
 
+export const apagadoCompleto = async (cpuValue = '8T') => {
+  const token = await pedirToken();
+  let resultados = {
+    cpu: { ok: false, mensaje: '' },
+    power: { ok: false, mensaje: '' }
+  };
+  
+  // Paso 1: Modificar CPU (reducir recursos)
+  try {
+    const cpuController = new AbortController();
+    const cpuTimeoutId = setTimeout(() => cpuController.abort(), 30000);
+    
+    const cpuRes = await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ cpu: cpuValue }),
+      signal: cpuController.signal
+    });
+    clearTimeout(cpuTimeoutId);
+    const cpuData = await cpuRes.json();
+    
+    if (cpuData.errors) {
+      resultados.cpu.mensaje = cpuData.errors[0].info;
+    } else {
+      resultados.cpu.ok = true;
+      resultados.cpu.mensaje = 'OK';
+    }
+  } catch (error) {
+    resultados.cpu.mensaje = error.message;
+  }
+  
+  // Paso 2: SIEMPRE ejecutar apagado, independientemente del resultado del CPU
+  try {
+    const powerController = new AbortController();
+    const powerTimeoutId = setTimeout(() => powerController.abort(), 30000);
+    
+    const powerRes = await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ power: 'off' }),
+      signal: powerController.signal
+    });
+    clearTimeout(powerTimeoutId);
+    const powerData = await powerRes.json();
+    
+    if (powerData.errors) {
+      resultados.power.mensaje = powerData.errors[0].info;
+    } else {
+      resultados.power.ok = true;
+      resultados.power.mensaje = 'OK';
+    }
+  } catch (error) {
+    resultados.power.mensaje = error.message;
+  }
+  
+  // Devolver resultado combinado
+  return {
+    errors: (!resultados.power.ok) ? [{ info: `CPU: ${resultados.cpu.mensaje}, Power: ${resultados.power.mensaje}` }] : null,
+    resultados
+  };
+}
+
+
 export const modificar = async (tipo, valor) => {
   const body = {}
   switch (tipo) {

@@ -14,6 +14,16 @@ const fh = (f) => {
 
 const pwr = async (pw, nombre, ip) => {
     const tokenParam = API_PREFIX ? '&token=df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2' : '';
+    
+    // Si es apagado, obtener el valor de CPU del selector
+    if (pw === 'off') {
+        const cpuValue = document.getElementById("procesadores").value;
+        const res = await fetch(`${API_PREFIX}/apagado-completo?cpu=${cpuValue}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}${tokenParam}`)
+        const rspta = await res.json()
+        return rspta;
+    }
+    
+    // Para encender y reiniciar, usar el endpoint normal
     const res = await fetch(`${API_PREFIX}/power?tipo=${pw}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}${tokenParam}`)
     const rspta = await res.json()
     return rspta;

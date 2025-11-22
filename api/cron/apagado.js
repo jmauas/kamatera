@@ -26,22 +26,50 @@ export default async function handler(req, res) {
                 secret: process.env.API_SECRET
             })
         }).then(res => res.json()).then(async ({ authentication }) => {
-            // Modificar CPU (apagar)
-            const cpuRes = await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authentication}`
-                },
-                body: JSON.stringify({ cpu: cpuValue })
-            });
-            const cpuData = await cpuRes.json();
+            let cpuModificado = false;
+            let errorCpu = null;
             
-            // Registrar resultado
-            if (cpuData.errors) {
-                await registrar('APAG. AUTO.', 0, 0, cpuData.errors[0].info, '', '').catch(console.error);
-            } else {
-                await registrar('APAG. AUTO.', 0, 0, 'OK', '', '').catch(console.error);
+            // Modificar CPU (reducir recursos)
+            try {
+                const cpuRes = await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authentication}`
+                    },
+                    body: JSON.stringify({ cpu: cpuValue })
+                });
+                const cpuData = await cpuRes.json();
+                
+                if (cpuData.errors) {
+                    errorCpu = cpuData.errors[0].info;
+                } else {
+                    cpuModificado = true;
+                }
+            } catch (error) {
+                errorCpu = error.message;
+            }
+            
+            // SIEMPRE ejecutar apagado, independientemente del resultado de CPU
+            try {
+                const powerRes = await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authentication}`
+                    },
+                    body: JSON.stringify({ power: 'off' })
+                });
+                const powerData = await powerRes.json();
+                
+                // Registrar resultado final
+                if (powerData.errors) {
+                    await registrar('APAG. AUTO.', 0, 0, `CPU: ${errorCpu || 'OK'}, Power: ${powerData.errors[0].info}`, '', '').catch(console.error);
+                } else {
+                    await registrar('APAG. AUTO.', 0, 0, `CPU: ${errorCpu || 'OK'}, Power: OK`, '', '').catch(console.error);
+                }
+            } catch (powerError) {
+                await registrar('APAG. AUTO.', 0, 0, `CPU: ${errorCpu || 'OK'}, Power Error: ${powerError.message}`, '', '').catch(console.error);
             }
         }).catch(async (error) => {
             console.error('Error en cron apagado:', error);
