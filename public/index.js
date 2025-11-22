@@ -10,13 +10,13 @@ const fh = (f) => {
 } 
 
 const pwr = async (pw, nombre, ip) => {
-    const res = await fetch(`/power/?tipo=${pw}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}`)
+    const res = await fetch(`/api/power?tipo=${pw}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
     const rspta = await res.json()
     return rspta;
 }
 
 const pedirTareas = async () => {
-    const res = await fetch(`/tasks`)
+    const res = await fetch(`/api/tasks`)
     const rspta = await res.json()
     tareas = rspta.tasks;
     let html = ``;
@@ -59,7 +59,7 @@ const agregarTxt = (val) => {
 }
 
 const pedirStatus = async () => {
-    const res = await fetch(`/status`)
+    const res = await fetch(`/api/status`)
     const data = await res.json()
     document.getElementById("nombre").innerText = data.name;
     if (data.power === "on") {
@@ -268,7 +268,7 @@ document.getElementById("aplicarSsd").addEventListener("click", async () => {
 });
 
 const modificar = async (tipo, valor, nombre, ip) => {
-    const res = await fetch(`/modificar/?tipo=${tipo}&valor=${valor}&nombre=${nombre}&ip=${ip}`)
+    const res = await fetch(`/api/modificar?tipo=${tipo}&valor=${valor}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
     const rspta = await res.json()
     return rspta;
 }
