@@ -78,14 +78,17 @@ app.get('/modificar', async (req, res) => {
     }
 });
 
-// Solo ejecutar agendar() y listen() en desarrollo local
-if (process.env.VERCEL !== '1') {
+// Solo ejecutar agendar() y listen() en desarrollo local (no en Vercel)
+if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
     // Importar dinámicamente agendar solo en desarrollo
     import('./tareas/agendar.js').then(({ agendar }) => {
         agendar();
-        app.listen(port, () => {
-            console.log(`Servidor Express escuchando en http://localhost:${port}`);
-        });
+    });
+    
+    // Solo iniciar servidor HTTP en desarrollo
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+        console.log(`Servidor Express escuchando en http://localhost:${port}`);
     });
 }
 
