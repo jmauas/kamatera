@@ -1,5 +1,5 @@
-import { pwr, modificar } from "../src/controllers/kamatera.js";
-import { registrar } from "../src/tareas/registro.js";
+import { pwr } from "../../src/controllers/kamatera.js";
+import { registrar } from "../../src/tareas/registro.js";
 
 // Función auxiliar para verificar el token de seguridad
 const verificarToken = (req) => {
@@ -16,26 +16,33 @@ export async function GET(request) {
         });
     }
 
-    try {
-        const res = await pwr('on');
-        if (res.errors) {
-            await registrar('ENC. AUTO.', 0, 0, res.errors[0].info, '', '');
-            return new Response(JSON.stringify({ ok: false, mensaje: res.errors[0].info }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } else {
-            await registrar('ENC. AUTO.', 0, 0, 'OK', '', '');
-            return new Response(JSON.stringify({ ok: true }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
+    // Responder inmediatamente y ejecutar en background
+    setImmediate(async () => {
+        try {
+            const res = await pwr('on');
+            if (res.errors) {
+                await registrar('ENC. AUTO.', 0, 0, res.errors[0].info, '', '').catch(err => 
+                    console.error('Error al registrar:', err)
+                );
+            } else {
+                await registrar('ENC. AUTO.', 0, 0, 'OK', '', '').catch(err => 
+                    console.error('Error al registrar:', err)
+                );
+            }
+        } catch (error) {
+            console.error('Error en cron encendido:', error);
+            await registrar('ENC. AUTO.', 0, 0, `Error: ${error.message}`, '', '').catch(err => 
+                console.error('Error al registrar:', err)
+            );
         }
-    } catch (error) {
-        console.error('Error en cron encendido:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
+    });
+
+    return new Response(JSON.stringify({ 
+        ok: true, 
+        mensaje: 'Encendido iniciado',
+        timestamp: new Date().toISOString()
+    }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
 }

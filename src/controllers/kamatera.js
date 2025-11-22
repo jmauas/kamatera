@@ -6,16 +6,26 @@ const pedirToken = async () => {
     secret: `${process.env.API_SECRET}`
   }
 
-  const res = await fetch(`${url}/authenticate`, {
-    cache: 'no-store',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(body)
-  })
-  const token = await res.json();
-  return token.authentication
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+
+  try {
+    const res = await fetch(`${url}/authenticate`, {
+      cache: 'no-store',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const token = await res.json();
+    return token.authentication;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 }
   
 export const statusServer = async () => {
@@ -48,18 +58,29 @@ export const pedirTasks = async () => {
   
   
 export const pwr = async (tipo) => {
-  const token = await pedirToken()
-  const body = {power: tipo}
-  const res = await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(body)
-  })
-  const rspta = await res.json()
-  return rspta;
+  const token = await pedirToken();
+  const body = {power: tipo};
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
+  
+  try {
+    const res = await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const rspta = await res.json();
+    return rspta;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 }
 
 export const modificar = async (tipo, valor) => {
@@ -80,17 +101,28 @@ export const modificar = async (tipo, valor) => {
       body.provision = 0
       break;   
   }
-  const token = await pedirToken()
-  console.log(JSON.stringify(body))
-  const res = await fetch(`${url}/server/${process.env.SERVER_ID}/${tipo}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify(body)
-  })
-  const rspta = await res.json()
-  console.log(rspta)
-  return rspta;
+  const token = await pedirToken();
+  console.log(JSON.stringify(body));
+  
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
+  
+  try {
+    const res = await fetch(`${url}/server/${process.env.SERVER_ID}/${tipo}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    const rspta = await res.json();
+    console.log(rspta);
+    return rspta;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
 }

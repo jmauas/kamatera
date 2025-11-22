@@ -5,8 +5,8 @@ Este documento describe cómo configurar las tareas programadas usando cron-job.
 ## 📋 Prerequisitos
 
 1. Despliega tu aplicación en Vercel
-2. Obtén la URL de producción (ej: `https://tu-proyecto.vercel.app`)
-3. Ten a mano el valor de tu variable `TOKEN`
+2. Obtén la URL de producción (ej: `https://kamatera.vercel.app`)
+3. Token: `df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2`
 
 ## 🔧 Configuración en cron-job.org
 
@@ -23,17 +23,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 1: Encendido Lun-Vie 9:00 AM**
 
 - **Title:** `Encendido Servidor Lun-Vie`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/encendido`
-- **Schedule:**
-  - Minutes: `0`
-  - Hours: `9`
-  - Days: Selecciona `Monday, Tuesday, Wednesday, Thursday, Friday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/encendido`
+- **Schedule (cron):** `0 9 * * 1-5`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -42,17 +38,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 2: Apagado Lun-Jue 11:00 PM (Primera fase - 8 CPU)**
 
 - **Title:** `Apagado Lun-Jue 11:00 PM - Fase 1`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=8`
-- **Schedule:**
-  - Minutes: `0`
-  - Hours: `23`
-  - Days: Selecciona `Monday, Tuesday, Wednesday, Thursday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
+- **Schedule (cron):** `0 23 * * 1-4`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -61,17 +53,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 3: Apagado Lun-Jue 11:59 PM (Segunda fase)**
 
 - **Title:** `Apagado Lun-Jue 11:59 PM - Fase 2`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=8`
-- **Schedule:**
-  - Minutes: `59`
-  - Hours: `23`
-  - Days: Selecciona `Monday, Tuesday, Wednesday, Thursday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
+- **Schedule (cron):** `59 23 * * 1-4`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -80,17 +68,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 4: Apagado Viernes 11:00 PM (Primera fase - 4 CPU)**
 
 - **Title:** `Apagado Viernes 11:00 PM - Fase 1`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=4`
-- **Schedule:**
-  - Minutes: `0`
-  - Hours: `23`
-  - Days: Selecciona `Friday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
+- **Schedule (cron):** `0 23 * * 5`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -99,17 +83,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 5: Apagado Viernes 11:59 PM (Segunda fase)**
 
 - **Title:** `Apagado Viernes 11:59 PM - Fase 2`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=4`
-- **Schedule:**
-  - Minutes: `59`
-  - Hours: `23`
-  - Days: Selecciona `Friday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
+- **Schedule (cron):** `59 23 * * 5`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -118,17 +98,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 6: Encendido Sábado 10:00 AM**
 
 - **Title:** `Encendido Servidor Sábado`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/encendido`
-- **Schedule:**
-  - Minutes: `0`
-  - Hours: `10`
-  - Days: Selecciona `Saturday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/encendido`
+- **Schedule (cron):** `0 10 * * 6`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -137,17 +113,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 7: Apagado Sábado 8:30 PM (Primera fase - 4 CPU)**
 
 - **Title:** `Apagado Sábado 8:30 PM - Fase 1`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=4`
-- **Schedule:**
-  - Minutes: `30`
-  - Hours: `20`
-  - Days: Selecciona `Saturday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
+- **Schedule (cron):** `30 20 * * 6`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -156,17 +128,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 8: Apagado Sábado 11:00 PM (Segunda fase)**
 
 - **Title:** `Apagado Sábado 11:00 PM - Fase 1`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=4`
-- **Schedule:**
-  - Minutes: `0`
-  - Hours: `23`
-  - Days: Selecciona `Saturday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
+- **Schedule (cron):** `0 23 * * 6`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -175,17 +143,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 9: Apagado Sábado 11:59 PM (Tercera fase)**
 
 - **Title:** `Apagado Sábado 11:59 PM - Fase 2`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=4`
-- **Schedule:**
-  - Minutes: `59`
-  - Hours: `23`
-  - Days: Selecciona `Saturday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
+- **Schedule (cron):** `59 23 * * 6`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -194,17 +158,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 10: Apagado Domingo 8:00 PM (Primera fase - 8 CPU)**
 
 - **Title:** `Apagado Domingo 8:00 PM - Fase 1`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=8`
-- **Schedule:**
-  - Minutes: `0`
-  - Hours: `20`
-  - Days: Selecciona `Sunday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
+- **Schedule (cron):** `0 20 * * 0`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -213,17 +173,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 11: Apagado Domingo 11:00 PM (Segunda fase)**
 
 - **Title:** `Apagado Domingo 11:00 PM - Fase 1`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=8`
-- **Schedule:**
-  - Minutes: `0`
-  - Hours: `23`
-  - Days: Selecciona `Sunday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
+- **Schedule (cron):** `0 23 * * 0`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -232,17 +188,13 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 12: Apagado Domingo 11:59 PM (Tercera fase)**
 
 - **Title:** `Apagado Domingo 11:59 PM - Fase 2`
-- **Address:** `https://TU-PROYECTO.vercel.app/api/cron/apagado?cpu=8`
-- **Schedule:**
-  - Minutes: `59`
-  - Hours: `23`
-  - Days: Selecciona `Sunday`
-  - Months: `Every month`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
+- **Schedule (cron):** `59 23 * * 0`
 - **Request settings:**
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: TU_TOKEN_AQUI
+    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 

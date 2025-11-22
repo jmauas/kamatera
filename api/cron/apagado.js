@@ -16,30 +16,37 @@ export async function GET(request) {
         });
     }
 
-    try {
-        const url = new URL(request.url);
-        const procesadores = url.searchParams.get('cpu') || '8';
-        
-        const res = await modificar('procesador', procesadores + 'T');
-        
-        if (res.errors) {
-            await registrar('APAG. AUTO.', 0, 0, res.errors[0].info, '', '');
-            return new Response(JSON.stringify({ ok: false, mensaje: res.errors[0].info }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } else {
-            await registrar('APAG. AUTO.', 0, 0, 'OK', '', '');
-            return new Response(JSON.stringify({ ok: true }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
+    const url = new URL(request.url);
+    const procesadores = url.searchParams.get('cpu') || '8';
+    
+    // Responder inmediatamente y ejecutar en background
+    setImmediate(async () => {
+        try {
+            const res = await modificar('procesador', procesadores + 'T');
+            
+            if (res.errors) {
+                await registrar('APAG. AUTO.', 0, 0, res.errors[0].info, '', '').catch(err => 
+                    console.error('Error al registrar:', err)
+                );
+            } else {
+                await registrar('APAG. AUTO.', 0, 0, 'OK', '', '').catch(err => 
+                    console.error('Error al registrar:', err)
+                );
+            }
+        } catch (error) {
+            console.error('Error en cron apagado:', error);
+            await registrar('APAG. AUTO.', 0, 0, `Error: ${error.message}`, '', '').catch(err => 
+                console.error('Error al registrar:', err)
+            );
         }
-    } catch (error) {
-        console.error('Error en cron apagado:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
+    });
+
+    return new Response(JSON.stringify({ 
+        ok: true, 
+        mensaje: `Apagado iniciado (${procesadores} CPU)`,
+        timestamp: new Date().toISOString()
+    }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+    });
 }
