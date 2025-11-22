@@ -2,21 +2,17 @@ import { registrar } from "../../src/tareas/registro.js";
 
 // Función auxiliar para verificar el token de seguridad
 const verificarToken = (req) => {
-    const token = req.headers.token || req.query.token;
+    const token = req.headers?.token || req.headers?.get?.('token') || req.query?.token;
     return token === process.env.TOKEN;
 };
 
 // Endpoint para apagar el servidor
-export async function GET(request) {
-    if (!verificarToken(request)) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-            status: 401,
-            headers: { 'Content-Type': 'application/json' }
-        });
+export default async function handler(req, res) {
+    if (!verificarToken(req)) {
+        return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const urlParams = new URL(request.url);
-    const procesadores = urlParams.searchParams.get('cpu') || '8';
+    const procesadores = req.query.cpu || '8';
     const cpuValue = procesadores + 'T';
     const url = 'https://console.kamatera.com/service';
     
@@ -63,12 +59,9 @@ export async function GET(request) {
     }
 
     // Responder después de iniciar la operación
-    return new Response(JSON.stringify({ 
+    return res.status(200).json({ 
         ok: true, 
         mensaje: `Apagado iniciado (${procesadores} CPU)`,
         timestamp: new Date().toISOString()
-    }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
     });
 }

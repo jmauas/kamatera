@@ -1,0 +1,13 @@
+### Test Cron Job 1: Encendido Lun-Vie 9:00 AM
+### Endpoint: /api/cron/encendido
+### Schedule: 0 9 * * 1-5 (Lunes a Viernes 9:00 AM)
+
+GET http://localhost:3000/api/cron/encendido
+token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+
+### Test sin token (debería fallar)
+GET http://localhost:3000/api/cron/encendido
+
+### Test en Vercel (producción)
+GET https://kamatera.vercel.app/api/cron/encendido
+token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
