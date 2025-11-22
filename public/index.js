@@ -3,6 +3,9 @@ let registro = [];
 let lat = 0;
 let long = 0;
 
+// Detectar si estamos en desarrollo local o en Vercel
+const API_PREFIX = window.location.hostname === 'localhost' ? '' : '/api';
+
 const fh = (f) => {
     const d = new Date(f);
     // Mostrar en hora local del navegador
@@ -10,13 +13,13 @@ const fh = (f) => {
 } 
 
 const pwr = async (pw, nombre, ip) => {
-    const res = await fetch(`/api/power?tipo=${pw}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
+    const res = await fetch(`${API_PREFIX}/power?tipo=${pw}&lat=${lat}&long=${long}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
     const rspta = await res.json()
     return rspta;
 }
 
 const pedirTareas = async () => {
-    const res = await fetch(`/api/tasks`)
+    const res = await fetch(`${API_PREFIX}/tasks`)
     const rspta = await res.json()
     tareas = rspta.tasks;
     let html = ``;
@@ -59,7 +62,7 @@ const agregarTxt = (val) => {
 }
 
 const pedirStatus = async () => {
-    const res = await fetch(`/api/status`)
+    const res = await fetch(`${API_PREFIX}/status`)
     const data = await res.json()
     document.getElementById("nombre").innerText = data.name;
     if (data.power === "on") {
@@ -268,7 +271,7 @@ document.getElementById("aplicarSsd").addEventListener("click", async () => {
 });
 
 const modificar = async (tipo, valor, nombre, ip) => {
-    const res = await fetch(`/api/modificar?tipo=${tipo}&valor=${valor}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
+    const res = await fetch(`${API_PREFIX}/modificar?tipo=${tipo}&valor=${valor}&nombre=${nombre}&ip=${ip}&token=${localStorage.getItem('token') || ''}`)
     const rspta = await res.json()
     return rspta;
 }

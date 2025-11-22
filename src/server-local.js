@@ -17,12 +17,13 @@ app.use(express.static(join(root, 'public')));
 
 // Middleware para verificar token (excepto rutas públicas)
 const verificarToken = (req, res, next) => {
-    const rutasPublicas = ['/', '/status'];
+    const rutasPublicas = ['/', '/status', '/tasks'];
     if (rutasPublicas.includes(req.path)) {
         return next();
     }
     
-    if (req.headers.token === process.env.TOKEN) {
+    const token = req.headers.token || req.query.token;
+    if (token === process.env.TOKEN) {
         next();
     } else {
         res.status(401).json({ error: 'Unauthorized' });
