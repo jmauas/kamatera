@@ -73,10 +73,27 @@ En el panel de Vercel, agregar las siguientes variables:
 - `SUPABASE_URL`
 - `SUPABASE_KEY`
 - `TOKEN`
-- `KAMATERA_API_KEY`
-- `KAMATERA_SECRET`
+- `CLIENT_ID`
+- `API_SECRET`
+- `SERVER_ID`
+- `GEOCODE_KEY`
 
-### 3. Desplegar
+### 3. Configurar Vercel Cron Jobs
+
+Las tareas programadas se ejecutan automáticamente usando **Vercel Cron Jobs**:
+
+- **Lun-Vie 9:00 AM**: Encendido automático del servidor
+- **Lun-Jue 11:00 PM**: Apagado con 8 procesadores
+- **Vie 11:00 PM**: Apagado con 4 procesadores
+- **Sáb 10:00 AM**: Encendido
+- **Sáb 8:30 PM**: Apagado con 4 procesadores
+- **Dom 8:00 PM**: Apagado con 8 procesadores
+
+Los cron jobs están configurados en `vercel.json` y se activan automáticamente después del despliegue.
+
+**Nota**: En desarrollo local, se usa `node-cron` tradicional. En producción (Vercel), se usan los Vercel Cron Jobs.
+
+### 4. Desplegar
 
 ```bash
 vercel

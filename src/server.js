@@ -18,6 +18,22 @@ export const iniciar = async () => {
     app.use(express.json());
     app.use(express.static(join(root, 'public')));
 
+    // Middleware para verificar token (excepto rutas públicas)
+    const verificarToken = (req, res, next) => {
+        const rutasPublicas = ['/', '/status'];
+        if (rutasPublicas.includes(req.path)) {
+            return next();
+        }
+        
+        if (req.headers.token === process.env.TOKEN) {
+            next();
+        } else {
+            res.status(401).json({ error: 'Unauthorized' });
+        }
+    };
+
+    app.use(verificarToken);
+
     app.get('/', (req, res) => {
         res.sendFile(join(root, 'public', 'index.html'));
     });
