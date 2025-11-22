@@ -78,28 +78,27 @@ En el panel de Vercel, agregar las siguientes variables:
 - `SERVER_ID`
 - `GEOCODE_KEY`
 
-### 3. Configurar Vercel Cron Jobs
-
-Las tareas programadas se ejecutan automáticamente usando **Vercel Cron Jobs**:
-
-- **Lun-Vie 9:00 AM**: Encendido automático del servidor
-- **Lun-Jue 11:00 PM**: Apagado con 8 procesadores
-- **Vie 11:00 PM**: Apagado con 4 procesadores
-- **Sáb 10:00 AM**: Encendido
-- **Sáb 8:30 PM**: Apagado con 4 procesadores
-- **Dom 8:00 PM**: Apagado con 8 procesadores
-
-Los cron jobs están configurados en `vercel.json` y se activan automáticamente después del despliegue.
-
-**Nota**: En desarrollo local, se usa `node-cron` tradicional. En producción (Vercel), se usan los Vercel Cron Jobs.
-
-### 4. Desplegar
+### 3. Desplegar
 
 ```bash
 vercel
 ```
 
 O conectar el repositorio de GitHub con Vercel para despliegue automático.
+
+### 4. Configurar Cron Jobs
+
+Este proyecto usa **cron-job.org** (gratis, ilimitado) para ejecutar tareas programadas.
+
+📋 **Ver guía completa**: [CRON_SETUP.md](CRON_SETUP.md)
+
+**Resumen rápido**:
+1. Regístrate en https://cron-job.org
+2. Crea 12 cron jobs apuntando a tus endpoints `/api/cron/encendido` y `/api/cron/apagado`
+3. Configura el header `token` con tu TOKEN en cada job
+4. Selecciona timezone: `America/Argentina/Buenos_Aires`
+
+Los horarios ya están documentados en el archivo CRON_SETUP.md con instrucciones paso a paso.
 
 ## Estructura del Proyecto
 
