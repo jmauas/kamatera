@@ -12,8 +12,8 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const procesadores = req.query.cpu || '8';
-    const cpuValue = procesadores + 'T';
+    // const procesadores = req.query.cpu || '8';
+    // const cpuValue = procesadores + 'T';
     const url = 'https://console.kamatera.com/service';
     
     try {
@@ -30,32 +30,32 @@ export default async function handler(req, res) {
             let errorCpu = null;
             
             console.log(authentication);
-            console.log(`Iniciando proceso de apagado con CPU: ${cpuValue}`);
-            // Modificar CPU (reducir recursos)
-            try {
-                const cpuRes = await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authentication}`
-                    },
-                    body: JSON.stringify({ cpu: cpuValue })
-                });
-                const cpuData = await cpuRes.json();
-                console.log(cpuData);
+            // console.log(`Iniciando proceso de apagado con CPU: ${cpuValue}`);
+            // // Modificar CPU (reducir recursos)
+            // try {
+            //     const cpuRes = await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
+            //         method: 'PUT',
+            //         headers: {
+            //             'Content-Type': 'application/json',
+            //             'Authorization': `Bearer ${authentication}`
+            //         },
+            //         body: JSON.stringify({ cpu: cpuValue })
+            //     });
+            //     const cpuData = await cpuRes.json();
+            //     console.log(cpuData);
 
-                if (cpuData.errors) {
-                    errorCpu = cpuData.errors[0].info;
-                } else {
-                    cpuModificado = true;
-                }
-            } catch (error) {
-                errorCpu = error.message;
-            }
+            //     if (cpuData.errors) {
+            //         errorCpu = cpuData.errors[0].info;
+            //     } else {
+            //         cpuModificado = true;
+            //     }
+            // } catch (error) {
+            //     errorCpu = error.message;
+            // }
             
-            console.log(`Inicio espera 2 minutos antes de apagar...`);
-            // Esperar 2 minutos antes de enviar el apagado
-            await new Promise(resolve => setTimeout(resolve, 120000));
+            // console.log(`Inicio espera 2 minutos antes de apagar...`);
+            // // Esperar 2 minutos antes de enviar el apagado
+            // await new Promise(resolve => setTimeout(resolve, 120000));
             
             console.log(`Enviando comando de apagado...`);
             // SIEMPRE ejecutar apagado, independientemente del resultado de CPU
