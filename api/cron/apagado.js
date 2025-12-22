@@ -99,7 +99,7 @@ export default async function handler(req, res) {
     // Responder después de iniciar la operación
     return res.status(200).json({ 
         ok: true, 
-        mensaje: `Apagado iniciado (${procesadores} CPU)`,
+        mensaje: `Apagado iniciado correctamente`,
         timestamp: new Date().toISOString()
     });
 }
