@@ -53,9 +53,11 @@ export default async function handler(req, res) {
                 errorCpu = error.message;
             }
             
+            console.log(`Inicio espera 2 minutos antes de apagar...`);
             // Esperar 2 minutos antes de enviar el apagado
             await new Promise(resolve => setTimeout(resolve, 120000));
             
+            console.log(`Enviando comando de apagado...`);
             // SIEMPRE ejecutar apagado, independientemente del resultado de CPU
             try {
                 const powerRes = await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
@@ -68,6 +70,8 @@ export default async function handler(req, res) {
                 });
                 const powerData = await powerRes.json();
                 
+                console.log(powerData);
+
                 // Registrar resultado final
                 if (powerData.errors) {
                     await registrar('APAG. AUTO.', 0, 0, `CPU: ${errorCpu || 'OK'}, Power: ${powerData.errors[0].info}`, '', '').catch(console.error);
