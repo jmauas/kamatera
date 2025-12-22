@@ -29,6 +29,8 @@ export default async function handler(req, res) {
             let cpuModificado = false;
             let errorCpu = null;
             
+            console.log(authentication);
+            console.log(`Iniciando proceso de apagado con CPU: ${cpuValue}`);
             // Modificar CPU (reducir recursos)
             try {
                 const cpuRes = await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
@@ -40,7 +42,8 @@ export default async function handler(req, res) {
                     body: JSON.stringify({ cpu: cpuValue })
                 });
                 const cpuData = await cpuRes.json();
-                
+                console.log(cpuData);
+
                 if (cpuData.errors) {
                     errorCpu = cpuData.errors[0].info;
                 } else {
@@ -50,8 +53,8 @@ export default async function handler(req, res) {
                 errorCpu = error.message;
             }
             
-            // Esperar 30 segundos antes de enviar el apagado
-            await new Promise(resolve => setTimeout(resolve, 30000));
+            // Esperar 2 minutos antes de enviar el apagado
+            await new Promise(resolve => setTimeout(resolve, 120000));
             
             // SIEMPRE ejecutar apagado, independientemente del resultado de CPU
             try {

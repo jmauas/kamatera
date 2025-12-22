@@ -1,0 +1,11 @@
+### Test Cron Apagado con CPU personalizado
+@token = df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+
+GET https://kamatera-birwqvszx-jmauas-projects.vercel.app/api/cron/apagado?cpu=12
+token: {{token}}
+
+### Test Cron Apagado con CPU por defecto (8T)
+GET https://kamatera.vercel.app/api/cron/apagado
+
+### Test Cron Apagado con otro valor de CPU
+GET https://kamatera.vercel.app/api/cron/apagado?cpu=8T
