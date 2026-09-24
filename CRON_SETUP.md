@@ -14,7 +14,23 @@ Este documento describe cómo configurar las tareas programadas usando cron-job.
 
 Ve a https://cron-job.org/en/signup/ y crea una cuenta gratuita.
 
-### 2. Crear los Cron Jobs
+### 2. Cómo funciona el apagado por fases
+
+`/api/cron/apagado` se llama varias veces por noche y decide qué hacer en cada llamada
+(Vercel corta las funciones a los 60 s, por eso no se puede reducir la CPU, esperar y apagar en una sola):
+
+| URL | Qué hace |
+|---|---|
+| `.../apagado?cpu=8` | Si el servidor tiene otra CPU, **solo la reduce** a 8T. Si ya tiene 8T, **lo apaga**. |
+| `.../apagado?cpu=8&final=1` | **Última fase**: apaga siempre, aunque la CPU no se haya podido reducir. |
+| `.../apagado` | Apaga directo. |
+
+- Si el servidor ya está apagado, no hace nada (responde 200 sin registrar).
+- Si falla algo, responde 502 y cron-job.org lo marca como fallido.
+- **La URL de la última fase de cada día lleva `&final=1`** (Jobs 3, 5, 9 y 12). Sin eso, si la reducción
+  de CPU fallara todas las veces, el servidor podría quedar encendido toda la noche.
+
+### 3. Crear los Cron Jobs
 
 Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y configura cada uno de los siguientes:
 
@@ -53,7 +69,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 3: Apagado Lun-Jue 11:59 PM (Segunda fase)**
 
 - **Title:** `Apagado Lun-Jue 11:59 PM - Fase 2`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8&final=1`
 - **Schedule (cron):** `59 23 * * 1-4`
 - **Request settings:**
   - Request method: `GET`
@@ -83,7 +99,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 5: Apagado Viernes 11:59 PM (Segunda fase)**
 
 - **Title:** `Apagado Viernes 11:59 PM - Fase 2`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4&final=1`
 - **Schedule (cron):** `59 23 * * 5`
 - **Request settings:**
   - Request method: `GET`
@@ -143,7 +159,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 9: Apagado Sábado 11:59 PM (Tercera fase)**
 
 - **Title:** `Apagado Sábado 11:59 PM - Fase 3`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4&final=1`
 - **Schedule (cron):** `59 23 * * 6`
 - **Request settings:**
   - Request method: `GET`
@@ -188,7 +204,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 12: Apagado Domingo 11:59 PM (Tercera fase)**
 
 - **Title:** `Apagado Domingo 11:59 PM - Fase 2`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8&final=1`
 - **Schedule (cron):** `59 23 * * 0`
 - **Request settings:**
   - Request method: `GET`

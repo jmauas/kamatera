@@ -135,7 +135,7 @@ Todos bajo `/api`:
 - Públicos: `GET /api/status`, `GET /api/tasks?limit=50`, `POST /api/power {tipo: on|off|restart, nombre}` y `POST /api/apagado-completo {paso: cpu|power, ...}` (apagado en dos pasos: Vercel corta a los 60 s). Las acciones exigen `nombre` y quedan registradas con la IP que ve el servidor.
 - `GET /api/session` · `POST /api/session {password}` · `DELETE /api/session` - estado, desbloqueo y bloqueo de la Configuración (cookie firmada `HttpOnly`)
 - `POST /api/modificar {tipo: procesador|ram|disco, valor, nombre}` - requiere la Configuración desbloqueada
-- `GET /api/cron/encendido` y `GET /api/cron/apagado` - solo con header `token`
+- `GET /api/cron/encendido` y `GET /api/cron/apagado?cpu=8&final=1` - solo con header `token` (el apagado funciona por fases; ver CRON_SETUP.md)
 
 ## Seguridad
 
