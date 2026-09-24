@@ -158,10 +158,7 @@ function infoEvento(c) {
     if (q.get('ram')) partes.push(`RAM ${etiquetaRam(Number(q.get('ram')))}`);
     return { clase: 'cfg', icono: '⚙', texto: 'Configurar', detalle: partes.join(' · ') };
   }
-  if (c.tipo === 'apagado') {
-    const viejo = q.get('cpu') || q.get('ram') || q.get('final');
-    return { clase: 'off', icono: '▼', texto: 'Apagar', detalle: viejo ? 'los parámetros de la URL ya no se usan' : '' };
-  }
+  if (c.tipo === 'apagado') return { clase: 'off', icono: '▼', texto: 'Apagar', detalle: '' };
   return { clase: 'otro', icono: '•', texto: c.titulo, detalle: '' };
 }
 

@@ -316,47 +316,40 @@ export const crearJob = (spec) => cj('/jobs', { method: 'PUT', body: cuerpoCreac
 /** Aplica un PATCH crudo a un job (el cuerpo ya debe estar validado). */
 export const editarJob = (jobId, job) => cj(`/jobs/${jobId}`, { method: 'PATCH', body: { job } });
 
-/* ---------- Conversión de los apagados existentes ---------- */
+/* ---------- CPU previa a cada apagado ---------- */
 
-/** Plan para convertir cada cron de apagado que trae `?cpu=N` en dos crons separados:
-    uno que cambia la CPU a la hora original y el propio apagado 2 minutos después.
-    Es una función pura: solo arma el plan, no toca nada. */
-export function planificarConversion(crons) {
+/** Plan para agregar, a cada cron de apagado existente, un cron que cambia la CPU a `cpu`
+    `minutosAntes` minutos antes (el apagado no se toca). Función pura: solo arma el plan.
+    Devuelve [{ original, nuevo }] o [{ original, omitido }].
+    Es idempotente: si ya existe un cron de configurar con el mismo horario y URL, lo omite. */
+export function planificarCpuPrevia(crons, { cpu, minutosAntes = 2 }) {
+    const valor = normalizarCpu(cpu);
+    if (!valor) throw error(400, 'Cantidad de procesadores no permitida.');
+
+    const yaExisten = new Set(crons.filter((c) => c.tipo === 'configurar')
+        .map((c) => JSON.stringify([c.url, c.schedule.hours, c.schedule.minutes, c.schedule.wdays])));
+
     const plan = [];
     for (const c of crons) {
         if (c.tipo !== 'apagado' || !/^apagado/i.test(c.titulo.trim())) continue;
-
-        let cpu = null;
-        try { cpu = new URL(c.url).searchParams.get('cpu'); } catch { /* URL rara */ }
-        if (!cpu) { plan.push({ original: c, omitido: 'la URL no trae cpu (apaga directo): se deja igual' }); continue; }
-        cpu = normalizarCpu(cpu);
-        if (!cpu) { plan.push({ original: c, omitido: 'el valor de cpu de la URL no es válido' }); continue; }
         const { hours, minutes, wdays } = c.schedule;
         if (hours.length !== 1 || minutes.length !== 1 || hours[0] === -1 || minutes[0] === -1) {
-            plan.push({ original: c, omitido: 'tiene varios horarios: hay que convertirlo a mano' });
+            plan.push({ original: c, omitido: 'tiene varios horarios: hay que agregarlo a mano' });
             continue;
         }
 
         const dias = wdays.length === 1 && wdays[0] === -1 ? [0, 1, 2, 3, 4, 5, 6] : wdays;
-        const despues = sumarMinutos({ dias, hora: hours[0], minuto: minutes[0] }, 2);
-        const origen = new URL(c.url).origin;
-        const base = c.titulo.trim();
-
-        plan.push({
-            original: c,
-            configurar: {
-                titulo: `${base} - configurar (CPU ${cpu})`,
-                url: `${origen}/api/cron/configurar?cpu=${cpu}`,
-                schedule: { ...c.schedule },
-                folderId: c.folderId,
-                habilitado: c.habilitado,
-            },
-            apagar: {
-                titulo: `${base} - apagar`,
-                url: `${origen}/api/cron/apagado`,
-                schedule: { ...c.schedule, hours: [despues.hora], minutes: [despues.minuto], wdays: normalizarDias(despues.dias) },
-            },
-        });
+        const antes = sumarMinutos({ dias, hora: hours[0], minuto: minutes[0] }, -minutosAntes);
+        const nuevo = {
+            titulo: `${c.titulo.trim()} - configurar (CPU ${valor})`,
+            url: `${new URL(c.url).origin}/api/cron/configurar?cpu=${valor}`,
+            schedule: { ...c.schedule, hours: [antes.hora], minutes: [antes.minuto], wdays: normalizarDias(antes.dias) },
+            folderId: c.folderId,
+            habilitado: c.habilitado,
+        };
+        const clave = JSON.stringify([nuevo.url, nuevo.schedule.hours, nuevo.schedule.minutes, nuevo.schedule.wdays]);
+        if (yaExisten.has(clave)) plan.push({ original: c, omitido: 'ya tiene su cron de configuración' });
+        else plan.push({ original: c, nuevo });
     }
     return plan;
 }

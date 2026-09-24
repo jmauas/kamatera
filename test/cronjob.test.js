@@ -195,49 +195,63 @@ test('crearCrones manda PUT /jobs con el token de servicio en el header y la car
     assert.equal(job.url, 'https://kamatera.vercel.app/api/cron/configurar?cpu=8T');
 });
 
-/* ---------- Conversión de los apagados existentes ---------- */
+/* ---------- CPU previa a cada apagado ---------- */
 
-const { planificarConversion } = await import('../src/cronjob.js');
+const { planificarCpuPrevia } = await import('../src/cronjob.js');
 
 const cron = (o) => ({
     id: 1, tipo: 'apagado', titulo: 'Apagado Lun-Jue 11:00 PM', habilitado: true, folderId: 5,
-    url: 'https://kamatera.vercel.app/api/cron/apagado?cpu=12',
+    url: 'https://kamatera.vercel.app/api/cron/apagado?cpu=8',
     schedule: { timezone: 'America/Argentina/Buenos_Aires', expiresAt: 0, hours: [23], minutes: [0], mdays: [-1], months: [-1], wdays: [1, 2, 3, 4] },
     ...o,
 });
 
-test('conversión: el apagado con cpu se divide en configurar (misma hora) y apagar 2 minutos después', () => {
-    const [p] = planificarConversion([cron({})]);
-    assert.equal(p.configurar.url, 'https://kamatera.vercel.app/api/cron/configurar?cpu=12T');
-    assert.deepEqual([p.configurar.schedule.hours, p.configurar.schedule.minutes, p.configurar.schedule.wdays], [[23], [0], [1, 2, 3, 4]]);
-    assert.equal(p.configurar.folderId, 5);
-    assert.equal(p.apagar.url, 'https://kamatera.vercel.app/api/cron/apagado');
-    assert.deepEqual([p.apagar.schedule.hours, p.apagar.schedule.minutes, p.apagar.schedule.wdays], [[23], [2], [1, 2, 3, 4]]);
-    assert.equal(p.apagar.titulo, 'Apagado Lun-Jue 11:00 PM - apagar');
+test('CPU previa: un cron de configurar 2 minutos antes del apagado, con la CPU pedida', () => {
+    const [p] = planificarCpuPrevia([cron({})], { cpu: '12' });
+    assert.equal(p.nuevo.url, 'https://kamatera.vercel.app/api/cron/configurar?cpu=12T');
+    assert.deepEqual([p.nuevo.schedule.hours, p.nuevo.schedule.minutes, p.nuevo.schedule.wdays], [[22], [58], [1, 2, 3, 4]]);
+    assert.equal(p.nuevo.titulo, 'Apagado Lun-Jue 11:00 PM - configurar (CPU 12T)');
+    assert.equal(p.nuevo.folderId, 5);
+    assert.equal(p.nuevo.habilitado, true);
+    assert.equal(p.nuevo.schedule.timezone, 'America/Argentina/Buenos_Aires');
 });
 
-test('conversión: 23:59 pasa a 00:01 del día siguiente (corre los días)', () => {
-    const [p] = planificarConversion([cron({ schedule: { ...cron({}).schedule, minutes: [59] } })]);
-    assert.deepEqual([p.apagar.schedule.hours, p.apagar.schedule.minutes, p.apagar.schedule.wdays], [[0], [1], [2, 3, 4, 5]]);
-    // el de configuración se queda a las 23:59 de los mismos días
-    assert.deepEqual([p.configurar.schedule.minutes, p.configurar.schedule.wdays], [[59], [1, 2, 3, 4]]);
+test('CPU previa: ignora el cpu de la URL del apagado y no toca el apagado', () => {
+    const original = cron({});
+    const copia = JSON.stringify(original);
+    planificarCpuPrevia([original], { cpu: '12' });
+    assert.equal(JSON.stringify(original), copia);
 });
 
-test('conversión: domingo 23:59 pasa al lunes; los pausados siguen pausados', () => {
-    const [p] = planificarConversion([cron({ habilitado: false, schedule: { ...cron({}).schedule, minutes: [59], wdays: [0] } })]);
-    assert.deepEqual(p.apagar.schedule.wdays, [1]);
-    assert.equal(p.configurar.habilitado, false);
+test('CPU previa: si cruza hacia atrás la medianoche corre los días (00:01 -> 23:59 del día anterior)', () => {
+    const [p] = planificarCpuPrevia([cron({ schedule: { ...cron({}).schedule, hours: [0], minutes: [1], wdays: [2, 3] } })], { cpu: '12' });
+    assert.deepEqual([p.nuevo.schedule.hours, p.nuevo.schedule.minutes, p.nuevo.schedule.wdays], [[23], [59], [1, 2]]);
 });
 
-test('conversión: se omiten los que no traen cpu, con cpu inválida o con varios horarios', () => {
-    const plan = planificarConversion([
-        cron({ url: 'https://kamatera.vercel.app/api/cron/apagado' }),
-        cron({ url: 'https://kamatera.vercel.app/api/cron/apagado?cpu=99' }),
-        cron({ schedule: { ...cron({}).schedule, hours: [22, 23] } }),
-        cron({ tipo: 'encendido', titulo: 'Encendido', url: 'https://kamatera.vercel.app/api/cron/encendido' }),
-    ]);
-    assert.equal(plan.length, 3); // el encendido ni aparece
-    assert.ok(plan.every((p) => p.omitido && !p.configurar));
+test('CPU previa: 23:59 -> 23:57 y 20:00 -> 19:58; los pausados quedan pausados', () => {
+    const [a] = planificarCpuPrevia([cron({ schedule: { ...cron({}).schedule, minutes: [59] } })], { cpu: '12' });
+    assert.deepEqual([a.nuevo.schedule.hours, a.nuevo.schedule.minutes], [[23], [57]]);
+    const [b] = planificarCpuPrevia([cron({ habilitado: false, schedule: { ...cron({}).schedule, hours: [20], wdays: [0] } })], { cpu: '12' });
+    assert.deepEqual([b.nuevo.schedule.hours, b.nuevo.schedule.minutes], [[19], [58]]);
+    assert.equal(b.nuevo.habilitado, false);
+});
+
+test('CPU previa: es idempotente y omite lo que no puede convertir', () => {
+    const apagado = cron({});
+    const [primero] = planificarCpuPrevia([apagado], { cpu: '12' });
+    const yaCreado = cron({ id: 2, tipo: 'configurar', titulo: primero.nuevo.titulo, url: primero.nuevo.url, schedule: primero.nuevo.schedule });
+    const plan = planificarCpuPrevia([
+        apagado, yaCreado,
+        cron({ id: 3, schedule: { ...apagado.schedule, hours: [22, 23] } }),
+        cron({ id: 4, tipo: 'encendido', titulo: 'Encendido', url: 'https://kamatera.vercel.app/api/cron/encendido' }),
+    ], { cpu: '12' });
+    assert.equal(plan.length, 2); // el encendido y el de configurar ni aparecen
+    assert.match(plan[0].omitido, /ya tiene/);
+    assert.match(plan[1].omitido, /varios horarios/);
+});
+
+test('CPU previa: CPU inválida da 400', () => {
+    assert.throws(() => planificarCpuPrevia([cron({})], { cpu: '99' }), (e) => e.status === 400);
 });
 
 test('editar el título: solo si sigue empezando con encendido/apagado/configurar', () => {

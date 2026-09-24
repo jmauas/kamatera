@@ -17,24 +17,25 @@ Ve a https://cron-job.org/en/signup/ y crea una cuenta gratuita.
 ### 2. Cómo se programa el apagado: dos crons separados
 
 Vercel corta las funciones a los 60 s, así que reducir la CPU, esperar y apagar no cabe en una sola llamada.
-Cada apagado se arma con **dos crons**:
+Cada apagado lleva **dos crons**:
 
 | Cron | URL | Cuándo |
 |---|---|---|
-| Configurar | `/api/cron/configurar?cpu=8` (también `&ram=16384`) | a la hora T |
-| Apagar | `/api/cron/apagado` | **2 minutos después** (T+2) |
+| Configurar | `/api/cron/configurar?cpu=12` (también `&ram=16384`) | 2 minutos **antes** del apagado |
+| Apagar | `/api/cron/apagado` | a la hora del apagado |
 
 - `configurar` cambia la CPU/RAM; si el servidor ya tenía ese valor lo da por bueno.
 - `apagado` apaga directo; si ya estaba apagado no hace nada. Ignora cualquier parámetro.
 - Si algo falla, responden 502 y cron-job.org lo marca como fallido.
-- Si T+2 cruza la medianoche (ej. 23:59 → 00:01) el cron de apagado va al día siguiente.
+
+**Situación actual:** los 10 crons de apagado ya tienen su cron de configuración (CPU 12T, 2 minutos antes).
+Se crearon con `node scripts/agregar-cpu-previa.js --aplicar` (sin `--aplicar` solo muestra el plan; es
+idempotente, así que se puede volver a correr; opciones `--cpu=12` y `--minutos=2`).
 
 **No hace falta crearlos a mano:** la página `/crons.html` (Configuración → "Administrar los crons")
-muestra el cronograma día por día, permite editar y pausar, y "＋ Agregar cron" crea el par completo.
+muestra el cronograma día por día, permite editar y pausar, y "＋ Agregar cron" crea un apagado con su
+cron de configuración (a la hora indicada) y el de apagado 2 minutos después.
 Requiere `CRONJOB_API_KEY` (Settings → API en cron-job.org).
-
-Para convertir los apagados viejos (`apagado?cpu=N`) en pares: `node scripts/convertir-apagados.js`
-(sin argumentos solo muestra el plan; con `--aplicar` lo ejecuta).
 
 ### 3. Crear los Cron Jobs a mano (alternativa a la página)
 
