@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f4f1ef">
+  <title>Crons — Servidor EstudioMQ</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <h1>Crons del servidor</h1>
+      <a class="btn btn--ghost btn--sm" href="/">← Volver al panel</a>
+    </header>
+
+    <!-- Acceso: la misma contraseña que la Configuración -->
+    <section id="gate" class="card" hidden>
+      <h2>Acceso protegido</h2>
+      <p class="muted">Ingresá la contraseña para ver y editar la programación.</p>
+      <button id="btnDesbloquear" class="btn btn--primary" type="button">Desbloquear</button>
+    </section>
+
+    <div id="contenido" class="contenido" hidden>
+      <div class="barra">
+        <p class="muted small" id="resumen"></p>
+        <div class="barra__acc">
+          <button id="btnActualizar" class="btn btn--neutral btn--sm" type="button">Actualizar</button>
+          <button id="btnBloquear" class="btn btn--ghost btn--sm" type="button">Bloquear</button>
+        </div>
+      </div>
+
+      <section aria-labelledby="tSemana">
+        <h2 id="tSemana">Programación semanal</h2>
+        <p class="muted small">Horarios de cada día según los crons activos. ▲ enciende, ▼ apaga.</p>
+        <div id="semana" class="semana"></div>
+      </section>
+
+      <section aria-labelledby="tLista">
+        <h2 id="tLista">Crons</h2>
+        <div id="lista" class="crons"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Editor de un cron -->
+  <dialog id="dlgCron" aria-labelledby="cronTitulo">
+    <form id="cronForm" autocomplete="off">
+      <h2 id="cronTitulo"></h2>
+
+      <fieldset class="dias">
+        <legend>Días</legend>
+        <div id="cronDias" class="dias__chips"></div>
+      </fieldset>
+
+      <div class="fila2">
+        <label class="field">Horas
+          <input id="cronHoras" name="horas" inputmode="numeric" placeholder="23" required>
+          <small class="muted">0 a 23. Varias separadas por coma.</small>
+        </label>
+        <label class="field">Minutos
+          <input id="cronMinutos" name="minutos" inputmode="numeric" placeholder="0" required>
+          <small class="muted">0 a 59. Varios separados por coma.</small>
+        </label>
+      </div>
+
+      <label class="field">URL
+        <input id="cronUrl" name="url" type="url" required>
+        <small class="muted">Ej.: <code>?cpu=8</code> reduce la CPU y <code>&amp;final=1</code> marca la última fase.</small>
+      </label>
+
+      <p id="cronNota" class="muted small" hidden></p>
+      <p id="cronPrevia" class="prevista" aria-live="polite"></p>
+
+      <label class="field">Tu nombre
+        <input id="cronNombre" name="nombre" maxlength="60" required placeholder="Nombre">
+      </label>
+
+      <p id="cronError" class="error" role="alert" hidden></p>
+      <div class="dlg__acciones">
+        <button class="btn btn--neutral" id="cronCancelar" type="button">Cancelar</button>
+        <button class="btn btn--primary" type="submit">Guardar cambios</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Diálogo genérico (contraseña y confirmaciones) -->
+  <dialog id="dlg" aria-labelledby="dlgTitulo">
+    <form id="dlgForm" method="dialog" autocomplete="off">
+      <h2 id="dlgTitulo"></h2>
+      <p id="dlgMensaje" class="dlg__msg"></p>
+      <div id="dlgCampos"></div>
+      <div class="dlg__acciones">
+        <button class="btn btn--neutral" id="dlgCancel" type="button">Cancelar</button>
+        <button class="btn btn--primary" id="dlgOk" type="submit"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="/crons.js"></script>
+</body>
+</html>

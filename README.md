@@ -35,6 +35,7 @@ Variables necesarias (ver `.env.example`):
 - `CONFIG_PASSWORD`: contraseña que protege la Configuración (CPU/RAM/disco). El resto del panel es público
 - `SESSION_SECRET`: firma de la cookie de sesión (mínimo 16 caracteres, aleatorio)
 - `TOKEN`: token de servicio, **solo** para cron-job.org y pruebas (header `token`); no va en el frontend
+- `CRONJOB_API_KEY`: clave de la API de cron-job.org (Settings → API), para la página de crons
 - `SUPABASE_URL` y `SUPABASE_SERVICE_KEY` (clave service_role, solo servidor; `SUPABASE_KEY` queda como respaldo)
 
 ## Migración de Datos
@@ -134,6 +135,7 @@ Todos bajo `/api`:
 
 - Públicos: `GET /api/status`, `GET /api/tasks?limit=50`, `POST /api/power {tipo: on|off|restart, nombre}` y `POST /api/apagado-completo {paso: cpu|power, ...}` (apagado en dos pasos: Vercel corta a los 60 s). Las acciones exigen `nombre` y quedan registradas con la IP que ve el servidor.
 - `GET /api/session` · `POST /api/session {password}` · `DELETE /api/session` - estado, desbloqueo y bloqueo de la Configuración (cookie firmada `HttpOnly`)
+- `GET/PATCH /api/crons` - lista y edita los crons de encendido/apagado en cron-job.org (requiere la Configuración desbloqueada). La página es `/crons.html`
 - `POST /api/modificar {tipo: procesador|ram|disco, valor, nombre}` - requiere la Configuración desbloqueada
 - `GET /api/cron/encendido` y `GET /api/cron/apagado?cpu=8&final=1` - solo con header `token` (el apagado funciona por fases; ver CRON_SETUP.md)
 

@@ -22,6 +22,7 @@ const rutas = {
     '/api/power': 'power.js',
     '/api/modificar': 'modificar.js',
     '/api/apagado-completo': 'apagado-completo.js',
+    '/api/crons': 'crons.js',
     '/api/cron/encendido': 'cron/encendido.js',
     '/api/cron/apagado': 'cron/apagado.js',
 };
