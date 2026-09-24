@@ -37,6 +37,7 @@ next-env.d.ts
 
 # Backup files
 *.backup
+registro.json
 registro.json.backup
 
 # Logs

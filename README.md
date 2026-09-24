@@ -29,12 +29,13 @@ Copiar `.env.example` a `.env` y configurar las variables:
 cp .env.example .env
 ```
 
-Variables necesarias:
-- `SUPABASE_URL`: URL de tu proyecto Supabase
-- `SUPABASE_KEY`: Clave anónima de Supabase
-- `TOKEN`: Token de seguridad para la API
-- `KAMATERA_API_KEY`: API Key de Kamatera
-- `KAMATERA_SECRET`: Secret de Kamatera
+Variables necesarias (ver `.env.example`):
+- `CLIENT_ID`, `API_SECRET`, `SERVER_ID`: credenciales y servidor de Kamatera
+- `GEOCODE_KEY`: geolocalización por IP (positionstack)
+- `CONFIG_PASSWORD`: contraseña que protege la Configuración (CPU/RAM/disco). El resto del panel es público
+- `SESSION_SECRET`: firma de la cookie de sesión (mínimo 16 caracteres, aleatorio)
+- `TOKEN`: token de servicio, **solo** para cron-job.org y pruebas (header `token`); no va en el frontend
+- `SUPABASE_URL` y `SUPABASE_SERVICE_KEY` (clave service_role, solo servidor; `SUPABASE_KEY` queda como respaldo)
 
 ## Migración de Datos
 
@@ -119,7 +120,6 @@ kamatera2/
 │   ├── db/
 │   │   └── supabase.js     # Cliente y funciones de Supabase
 │   └── tareas/
-│       ├── agendar.js      # Tareas programadas
 │       └── registro.js     # Registro de eventos
 ├── .env.example
 ├── .gitignore
@@ -130,15 +130,26 @@ kamatera2/
 
 ## API Endpoints
 
-- `GET /` - Interfaz web
-- `GET /status` - Estado del servidor
-- `GET /tasks` - Tareas y registros
-- `GET /power?tipo={on|off|restart}&nombre=X&ip=X&lat=X&long=X` - Control de energía
-- `GET /modificar?tipo={procesador|ram}&valor=X&nombre=X&ip=X` - Modificar recursos
+Todos bajo `/api`:
+
+- Públicos: `GET /api/status`, `GET /api/tasks?limit=50`, `POST /api/power {tipo: on|off|restart, nombre}` y `POST /api/apagado-completo {paso: cpu|power, ...}` (apagado en dos pasos: Vercel corta a los 60 s). Las acciones exigen `nombre` y quedan registradas con la IP que ve el servidor.
+- `GET /api/session` · `POST /api/session {password}` · `DELETE /api/session` - estado, desbloqueo y bloqueo de la Configuración (cookie firmada `HttpOnly`)
+- `POST /api/modificar {tipo: procesador|ram|disco, valor, nombre}` - requiere la Configuración desbloqueada
+- `GET /api/cron/encendido` y `GET /api/cron/apagado` - solo con header `token`
 
 ## Seguridad
 
-Todos los endpoints requieren el header `token` con el valor configurado en las variables de entorno.
+- Solo la Configuración pide contraseña; se valida en el servidor y la sesión es una cookie firmada `HttpOnly`. El navegador nunca conoce el `TOKEN`.
+- El registro público muestra fecha, acción, nombre y resultado; la IP y el domicilio solo aparecen con la Configuración desbloqueada.
+- El `TOKEN` solo se acepta por header, nunca por query string.
+- Todo valor de CPU/RAM/disco se valida contra listas permitidas, y el disco no se puede reducir.
+- Para cerrar el acceso anónimo a la tabla `registros` en Supabase, ejecutá `database/enable-rls.sql` **después** de configurar `SUPABASE_SERVICE_KEY`.
+
+## Pruebas
+
+```bash
+npm test
+```
 
 ## Licencia
 

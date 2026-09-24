@@ -1,97 +1,37 @@
+/* Servidor de desarrollo local: monta los mismos handlers de /api que corren en Vercel,
+   así el panel se prueba igual que en producción. No agenda tareas: el encendido y
+   apagado automáticos los dispara cron-job.org (ver CRON_SETUP.md). */
+
 import { config } from 'dotenv';
-import serverless from 'serverless-http';
-import cors from 'cors';
 import express from 'express';
-import { join } from 'path';
-const root = process.cwd();
-import { statusServer, pedirTasks, pwr, modificar } from "./controllers/kamatera.js";
-import { registrar, pedirRegistro } from "./tareas/registro.js";
+import { join } from 'node:path';
 
 config();
 
+const root = process.cwd();
 const app = express();
-const port = 3000;
-app.use(cors());
+
+app.disable('x-powered-by');
 app.use(express.json());
 app.use(express.static(join(root, 'public')));
 
-// Middleware para verificar token (excepto rutas públicas)
-const verificarToken = (req, res, next) => {
-    const rutasPublicas = ['/', '/status', '/tasks', '/power', '/modificar'];
-    if (rutasPublicas.includes(req.path)) {
-        return next();
-    }
-    
-    const token = req.headers.token || req.query.token;
-    if (token === process.env.TOKEN) {
-        next();
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
-    }
+const rutas = {
+    '/api/session': 'session.js',
+    '/api/status': 'status.js',
+    '/api/tasks': 'tasks.js',
+    '/api/power': 'power.js',
+    '/api/modificar': 'modificar.js',
+    '/api/apagado-completo': 'apagado-completo.js',
+    '/api/cron/encendido': 'cron/encendido.js',
+    '/api/cron/apagado': 'cron/apagado.js',
 };
 
-app.use(verificarToken);
-
-app.get('/', (req, res) => {
-    res.sendFile(join(root, 'public', 'index.html'));
-});
-
-app.get('/status', async (req, res) => {
-    const status = await statusServer(); 
-    console.log(status);
-    res.status(200).json(status);
-});
-
-app.get('/tasks', async (req, res) => {
-    const tasks = await pedirTasks();
-    const registro = await pedirRegistro();  
-    res.status(200).json({tasks, registro});
-});
-
-app.get('/power', async (req, res) => {
-    const tipo = req.query.tipo;
-    const lat = req.query.lat;
-    const long = req.query.long;
-    const nombre = req.query.nombre;
-    const ip = req.query.ip;
-    const data = await pwr(tipo);
-    if (data.errors) {
-        await registrar(tipo, lat, long, data.errors[0].info, nombre, ip)
-        res.status(200).json({ ok: false, mensaje: data.errors[0].info });
-    } else {
-        await registrar(tipo, lat, long, 'OK', nombre, ip)
-        res.status(200).json({ ok: true});
-    }
-});
-
-app.get('/modificar', async (req, res) => {
-    const tipo = req.query.tipo;
-    const valor = req.query.valor;
-    const nombre = req.query.nombre;
-    const ip = req.query.ip;
-    const data = await modificar(tipo, valor);
-    if (data.errors) {
-        await registrar(`${tipo} a ${valor}`, 0, 0, data.errors[0].info, nombre, ip)
-        res.status(200).json({ ok: false, mensaje: data.errors[0].info });
-    } else {
-        await registrar(`${tipo} a ${valor}`, 0, 0, 'OK', nombre, ip)
-        res.status(200).json({ ok: true});
-    }
-});
-
-// Solo ejecutar agendar() y listen() en desarrollo local (no en Vercel)
-if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    // Importar dinámicamente agendar solo en desarrollo
-    import('./tareas/agendar.js').then(({ agendar }) => {
-        agendar();
-    });
-    
-    // Solo iniciar servidor HTTP en desarrollo
-    const port = process.env.PORT || 3000;
-    app.listen(port, () => {
-        console.log(`Servidor Express escuchando en http://localhost:${port}`);
-    });
+for (const [ruta, archivo] of Object.entries(rutas)) {
+    const { default: handler } = await import(`../api/${archivo}`);
+    app.all(ruta, (req, res) => handler(req, res));
 }
 
-// Exportar para Vercel (serverless)
-export default serverless(app);
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+    console.log(`Servidor local en http://localhost:${port}`);
+});

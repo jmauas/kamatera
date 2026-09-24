@@ -6,7 +6,8 @@ let supabaseInstance = null;
 function getSupabaseClient() {
     if (!supabaseInstance) {
         const supabaseUrl = process.env.SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_KEY;
+        // Preferir la service_role key (solo servidor); SUPABASE_KEY queda como respaldo.
+        const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
             throw new Error('Error: SUPABASE_URL y SUPABASE_KEY no están configurados en las variables de entorno');
@@ -74,10 +75,13 @@ export async function insertarRegistro(registro) {
  * @param {number} limit - Número máximo de registros a obtener
  * @returns {Promise<Array>} - Array de registros
  */
+// Columnas que usa el panel (sin latitud/longitud exactas).
+const COLUMNAS_PANEL = 'id,fecha,evento,res,nombre,ip,street,number,neighbourhood,locality,county,administrative_area,postal_code,country';
+
 export async function obtenerRegistros(limit = 100) {
     const { data, error } = await supabase
         .from('registros')
-        .select('*')
+        .select(COLUMNAS_PANEL)
         .order('fecha', { ascending: false })
         .limit(limit);
 

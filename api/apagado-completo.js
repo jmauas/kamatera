@@ -1,35 +1,36 @@
-import { apagadoCompleto } from "../src/controllers/kamatera.js";
+import { apagadoPasoCpu, apagadoPasoPower } from "../src/controllers/kamatera.js";
 import { registrar } from "../src/tareas/registro.js";
+import { normalizarCpu } from "../src/validacion.js";
+import { bodyDe, clientIp, limpiarTexto, soloMetodo } from "../src/util.js";
 
-// Middleware para verificar token
-const verificarToken = (req) => {
-    const token = req.headers.token || req.query.token;
-    return token === process.env.TOKEN;
-};
-
+/* Apagado completo en dos pasos (Vercel corta a los 60 s, no se puede esperar adentro).
+   POST /api/apagado-completo
+     { paso: "cpu",   cpu: "12T" }                       -> reduce la CPU y responde enseguida.
+     { paso: "power", cpuMsg, nombre, lat?, long? }      -> apaga el servidor y registra el evento.
+   El panel espera 2 minutos entre ambos pasos. */
 export default async function handler(req, res) {
-    if (!verificarToken(req)) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
+    if (!soloMetodo(req, res, 'POST')) return;
 
-    const { cpu, lat, long, nombre, ip } = req.query;
-    const cpuValue = (cpu || '8') + 'T';
+    const { paso, cpu, cpuMsg, lat, long, nombre } = bodyDe(req);
 
     try {
-        const data = await apagadoCompleto(cpuValue);
-        const mensajeFinal = `CPU: ${data.resultados.cpu.mensaje}, Power: ${data.resultados.power.mensaje}`;
-        
-        if (data.errors) {
-            await registrar('off', lat, long, mensajeFinal, nombre, ip);
-            res.status(200).json({ ok: false, mensaje: mensajeFinal });
-        } else {
-            await registrar('off', lat, long, mensajeFinal, nombre, ip);
-            res.status(200).json({ ok: true, mensaje: mensajeFinal });
+        if (paso === 'cpu') {
+            const cpuValue = normalizarCpu(cpu);
+            if (!cpuValue) return res.status(400).json({ error: 'Cantidad de procesadores no permitida.' });
+            return res.status(200).json(await apagadoPasoCpu(cpuValue));
         }
+
+        if (paso === 'power') {
+            if (!limpiarTexto(nombre)) return res.status(400).json({ error: 'Falta tu nombre.' });
+            const r = await apagadoPasoPower();
+            const mensajeFinal = `CPU: ${limpiarTexto(cpuMsg, 200) || 'sin datos'}, Power: ${r.mensaje}`;
+            await registrar('off', lat, long, mensajeFinal, nombre, clientIp(req));
+            return res.status(200).json({ ok: r.ok, mensaje: mensajeFinal });
+        }
+
+        return res.status(400).json({ error: 'Falta el parámetro paso (cpu | power).' });
     } catch (error) {
-        console.error('Error en /api/apagado-completo:', error);
-        const mensajeError = `Error: ${error.message}`;
-        await registrar('off', lat, long, mensajeError, nombre, ip);
-        res.status(500).json({ error: mensajeError });
+        console.error('Error en /api/apagado-completo:', error.message);
+        res.status(500).json({ error: error.message });
     }
 }

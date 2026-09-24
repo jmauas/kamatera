@@ -5,21 +5,24 @@
   "description": "Sistema de gestión y monitoreo de servidor Kamatera con Vercel y Supabase",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test/*.test.js",
     "dev": "node --watch-path=./src --watch-path=./public ./src/server-local.js",
     "start": "node ./src/server-local.js",
     "verify": "node ./database/verify-setup.js",
     "migrate": "node ./database/migrate.js"
   },
-  "keywords": ["kamatera", "server-management", "vercel", "supabase"],
+  "keywords": [
+    "kamatera",
+    "server-management",
+    "vercel",
+    "supabase"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "node-cron": "^3.0.3",
-    "serverless-http": "^3.2.0"
+    "express": "^4.19.2"
   }
 }

@@ -1,38 +1,28 @@
-import { config } from 'dotenv';
+const VACIO = {
+    street: '', number: '', neighbourhood: '', region: '', county: '',
+    locality: '', administrative_area: '', postal_code: '', country: ''
+};
 
-config();
-const key = process.env.GEOCODE_KEY;
-const url = `http://api.positionstack.com/v1/reverse?access_key=${key}`;
+/* Geolocaliza por IP con positionstack.
+   Nota: el plan gratuito de positionstack solo soporta HTTP, no HTTPS. */
+export const pedirDir = async (ip) => {
+    const key = process.env.GEOCODE_KEY;
+    if (!key || !ip) return { ...VACIO };
 
-export const pedirDir = async (lat, lng, ip) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
     try {
-        // Timeout de 5 segundos para evitar bloqueos largos
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const res = await fetch(`${url}&query=${ip}&limit=1`,{
-            headers: { 
-                'User-Agent': 'NewManag',
-            },
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
+        const res = await fetch(
+            `http://api.positionstack.com/v1/reverse?access_key=${encodeURIComponent(key)}&query=${encodeURIComponent(ip)}&limit=1`,
+            { headers: { 'User-Agent': 'NewManag' }, signal: controller.signal }
+        );
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
-        return data.data[0];    
+        return data.data?.[0] || { ...VACIO };
     } catch (err) {
         console.log('Error en geolocalización:', err.message);
-        return {
-            street: '',
-            number: '',
-            neighbourhood: '',
-            region: '',
-            county: '',
-            locality: '',
-            administrative_area: '',
-            postal_code: '',
-            country: ''
-        }
+        return { ...VACIO };
+    } finally {
+        clearTimeout(timeoutId);
     }
 }

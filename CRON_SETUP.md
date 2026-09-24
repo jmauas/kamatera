@@ -1,14 +1,12 @@
 # Configuración de Cron Jobs con cron-job.org
 https://console.cron-job.org/dashboard
-usuario j@estudiomq.com.ar
-clave con 1
 Este documento describe cómo configurar las tareas programadas usando cron-job.org (gratis e ilimitado).
 
 ## 📋 Prerequisitos
 
 1. Despliega tu aplicación en Vercel
 2. Obtén la URL de producción (ej: `https://kamatera.vercel.app`)
-3. Token: `df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2`
+3. Token: `<TU_TOKEN>`
 
 ## 🔧 Configuración en cron-job.org
 
@@ -31,7 +29,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -46,7 +44,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -61,7 +59,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -76,7 +74,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -91,7 +89,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -106,7 +104,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -121,7 +119,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -136,7 +134,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -151,7 +149,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -166,7 +164,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -181,7 +179,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 
@@ -196,7 +194,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
   - Request method: `GET`
   - Custom request headers:
     ```
-    token: df7e8a9b2c3d4e5a1b2c3d4e5f6a7b8c9d0e1f2
+    token: <TU_TOKEN>
     ```
 - **Timezone:** `America/Argentina/Buenos_Aires`
 

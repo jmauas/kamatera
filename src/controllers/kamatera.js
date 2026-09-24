@@ -1,228 +1,123 @@
+import { validarCambio } from '../validacion.js';
+
 const url = 'https://console.kamatera.com/service';
 
-const pedirToken = async () => {
-  console.log('[pedirToken] Iniciando solicitud de token de autenticación');
-  const body = {
-    clientId: `${process.env.CLIENT_ID}`,
-    secret: `${process.env.API_SECRET}`
-  }
+/* El token de Kamatera se reutiliza unos minutos en vez de pedir uno por request. */
+const TOKEN_TTL_MS = 5 * 60 * 1000;
+let tokenCache = { valor: null, expira: 0 };
+
+const pedirToken = async (forzar = false) => {
+  if (!forzar && tokenCache.valor && Date.now() < tokenCache.expira) return tokenCache.valor;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
-
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
   try {
-    console.log('[pedirToken] Enviando petición de autenticación...');
     const res = await fetch(`${url}/authenticate`, {
       cache: 'no-store',
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: process.env.CLIENT_ID, secret: process.env.API_SECRET }),
       signal: controller.signal
     });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.authentication) {
+      throw new Error(data?.errors?.[0]?.info || `No se pudo autenticar en Kamatera (HTTP ${res.status}).`);
+    }
+    tokenCache = { valor: data.authentication, expira: Date.now() + TOKEN_TTL_MS };
+    return data.authentication;
+  } finally {
     clearTimeout(timeoutId);
-    const token = await res.json();
-    console.log('[pedirToken] Token obtenido exitosamente');
-    return token.authentication;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    console.error('[pedirToken] Error al obtener token:', error.message);
-    throw error;
   }
 }
-  
-export const statusServer = async () => {
-  console.log('[statusServer] Iniciando consulta de estado del servidor');
-  const token = await pedirToken()
-  console.log('[statusServer] Token obtenido, consultando servidor:', process.env.SERVER_ID);
 
-  const res = await fetch(`${url}/server/${process.env.SERVER_ID}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+/* Llamada a Kamatera con token, timeout y un reintento si el token venció.
+   Si la respuesta no es exitosa y no trae `errors`, se devuelve { errors: [...] }
+   para que los llamadores traten todos los fallos igual. */
+const kfetch = async (path, { method = 'GET', body, timeoutMs = 30000 } = {}) => {
+  for (let intento = 0; intento < 2; intento++) {
+    const token = await pedirToken(intento > 0);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(`${url}${path}`, {
+        method,
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: controller.signal
+      });
+      if (res.status === 401 && intento === 0) continue;
+      const data = await res.json().catch(() => null);
+      if (!res.ok && !(data && data.errors)) {
+        return { errors: [{ info: `Kamatera respondió HTTP ${res.status}.` }] };
+      }
+      return data ?? {};
+    } finally {
+      clearTimeout(timeoutId);
     }
-  })
-  const srv = await res.json()
-  console.log('[statusServer] Estado recibido:', { power: srv.power, cpu: srv.cpu, ram: srv.ram });
-  return srv
+  }
 }
-  
+
+const server = () => `/server/${process.env.SERVER_ID}`;
+
+export const statusServer = async () => {
+  const srv = await kfetch(server());
+  if (srv.errors) throw new Error(srv.errors[0].info);
+  return srv;
+}
+
 export const pedirTasks = async () => {
-  console.log('[pedirTasks] Iniciando consulta de tareas pendientes');
-  const token = await pedirToken()
-  console.log('[pedirTasks] Consultando cola de tareas...');
-  const res = await fetch(`${url}/queue`, {
-    next: { revalidate: 1 }, 
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  })
-  const tasks = await res.json()
-  console.log('[pedirTasks] Tareas recibidas, cantidad:', tasks.length || 0);
+  const tasks = await kfetch('/queue');
+  if (!Array.isArray(tasks)) throw new Error(tasks?.errors?.[0]?.info || 'Respuesta inesperada de la cola de tareas.');
   return tasks;
 }
-  
-  
-export const pwr = async (tipo) => {
-  console.log('[pwr] Iniciando operación de power:', tipo);
-  const token = await pedirToken();
-  const body = {power: tipo};
-  console.log('[pwr] Enviando comando power a servidor:', process.env.SERVER_ID);
-  
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
-  
+
+/** Encender / apagar / reiniciar. `tipo` ya validado (on | off | restart). */
+export const pwr = (tipo) =>
+  kfetch(`${server()}/power`, { method: 'PUT', body: { power: tipo } });
+
+/* El apagado completo se hace en dos pasos porque Vercel corta las funciones
+   a los 60 s y entre la modificación de CPU y el apagado hay que esperar 2 minutos.
+   El panel llama a cada paso por separado y espera entre ambos. */
+
+/** Paso 1: reduce la CPU. `cpuValue` ya validado (ej. "8T"). Devuelve { ok, mensaje }. */
+export const apagadoPasoCpu = async (cpuValue) => {
   try {
-    const res = await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    const rspta = await res.json();
-    console.log('[pwr] Respuesta recibida:', rspta.errors ? 'ERROR' : 'OK', rspta);
-    return rspta;
+    const data = await kfetch(`${server()}/cpu`, { method: 'PUT', body: { cpu: cpuValue } });
+    return data.errors ? { ok: false, mensaje: data.errors[0].info } : { ok: true, mensaje: 'OK' };
   } catch (error) {
-    clearTimeout(timeoutId);
-    console.error('[pwr] Error en operación de power:', error.message);
-    throw error;
+    return { ok: false, mensaje: error.message };
   }
 }
 
-export const apagadoCompleto = async (cpuValue = '8T') => {
-  console.log('[apagadoCompleto] Iniciando proceso de apagado completo con CPU:', cpuValue);
-  const token = await pedirToken();
-  let resultados = {
-    cpu: { ok: false, mensaje: '' },
-    power: { ok: false, mensaje: '' }
-  };
-  
-  // Paso 1: Modificar CPU (reducir recursos)
-  console.log('[apagadoCompleto] PASO 1: Modificando CPU a', cpuValue);
+/** Paso 2: apaga el servidor (se ejecuta siempre, haya salido bien o no la CPU). */
+export const apagadoPasoPower = async () => {
   try {
-    const cpuController = new AbortController();
-    const cpuTimeoutId = setTimeout(() => cpuController.abort(), 30000);
-    
-    const cpuRes = await fetch(`${url}/server/${process.env.SERVER_ID}/cpu`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ cpu: cpuValue }),
-      signal: cpuController.signal
-    });
-    clearTimeout(cpuTimeoutId);
-    const cpuData = await cpuRes.json();
-    
-    if (cpuData.errors) {
-      resultados.cpu.mensaje = cpuData.errors[0].info;
-      console.log('[apagadoCompleto] PASO 1: Error en modificación de CPU:', cpuData.errors[0].info);
-    } else {
-      resultados.cpu.ok = true;
-      resultados.cpu.mensaje = 'OK';
-      console.log('[apagadoCompleto] PASO 1: CPU modificada exitosamente');
-    }
+    const data = await pwr('off');
+    return data.errors ? { ok: false, mensaje: data.errors[0].info } : { ok: true, mensaje: 'OK' };
   } catch (error) {
-    resultados.cpu.mensaje = error.message;
-    console.error('[apagadoCompleto] PASO 1: Excepción al modificar CPU:', error.message);
+    return { ok: false, mensaje: error.message };
   }
-  
-  // Esperar 2 minutos antes de enviar el apagado
-  console.log('[apagadoCompleto] Esperando 2 minutos antes de apagar...');
-  await new Promise(resolve => setTimeout(resolve, 120000));
-  
-  // Paso 2: SIEMPRE ejecutar apagado, independientemente del resultado del CPU
-  console.log('[apagadoCompleto] PASO 2: Ejecutando apagado del servidor');
-  try {
-    const powerController = new AbortController();
-    const powerTimeoutId = setTimeout(() => powerController.abort(), 120000);
-    
-    const powerRes = await fetch(`${url}/server/${process.env.SERVER_ID}/power`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ power: 'off' }),
-      signal: powerController.signal
-    });
-    clearTimeout(powerTimeoutId); 
-    const powerData = await powerRes.json();
-    
-    if (powerData.errors) {
-      resultados.power.mensaje = powerData.errors[0].info;
-      console.log('[apagadoCompleto] PASO 2: Error en apagado:', powerData.errors[0].info);
-    } else {
-      resultados.power.ok = true;
-      resultados.power.mensaje = 'OK';
-      console.log('[apagadoCompleto] PASO 2: Servidor apagado exitosamente');
-    }
-  } catch (error) {
-    resultados.power.mensaje = error.message;
-    console.error('[apagadoCompleto] PASO 2: Excepción al apagar servidor:', error.message);
-  }
-  
-  // Devolver resultado combinado
-  console.log('[apagadoCompleto] Proceso finalizado. Resultados:', resultados);
-  return {
-    errors: (!resultados.power.ok) ? [{ info: `CPU: ${resultados.cpu.mensaje}, Power: ${resultados.power.mensaje}` }] : null,
-    resultados
-  };
 }
 
-
+/** Cambia CPU, RAM o disco. El valor se valida acá también (defensa en profundidad). */
 export const modificar = async (tipo, valor) => {
-  console.log('[modificar] Iniciando modificación de recurso:', tipo, 'valor:', valor);
-  const body = {}
+  const check = validarCambio(tipo, valor);
+  if (check.error) return { errors: [{ info: check.error }] };
+
   switch (tipo) {
     case 'procesador':
-      tipo = 'cpu'
-      body.cpu = valor
-      break;
+      return kfetch(`${server()}/cpu`, { method: 'PUT', body: { cpu: check.valor } });
     case 'ram':
-      tipo = 'ram'
-      body.ram = Number(valor)
-      break;
-    case 'disco':
-      tipo = 'disk'
-      body.size = Number(valor)
-      body.index= 0
-      body.provision = 0
-      break;   
-  }
-  console.log('[modificar] Tipo convertido a:', tipo, 'Body:', JSON.stringify(body));
-  const token = await pedirToken();
-  console.log('[modificar] Enviando petición de modificación al servidor:', process.env.SERVER_ID);
-  
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
-  
-  try {
-    const res = await fetch(`${url}/server/${process.env.SERVER_ID}/${tipo}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
-    const rspta = await res.json();
-    console.log('[modificar] Respuesta recibida:', rspta.errors ? 'ERROR' : 'OK', rspta);
-    return rspta;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    console.error('[modificar] Error en modificación:', error.message);
-    throw error;
+      return kfetch(`${server()}/ram`, { method: 'PUT', body: { ram: check.valor } });
+    case 'disco': {
+      // El disco no se puede reducir: se bloquea antes de pedirlo.
+      const srv = await statusServer();
+      const actual = Number(srv.diskSizes?.[0]);
+      if (Number.isFinite(actual) && check.valor < actual) {
+        return { errors: [{ info: `El disco no se puede reducir (actual: ${actual} GB).` }] };
+      }
+      return kfetch(`${server()}/disk`, { method: 'PUT', body: { size: check.valor, index: 0, provision: 0 } });
+    }
   }
 }
