@@ -6,8 +6,11 @@ let supabaseInstance = null;
 function getSupabaseClient() {
     if (!supabaseInstance) {
         const supabaseUrl = process.env.SUPABASE_URL;
-        // Preferir la service_role key (solo servidor); SUPABASE_KEY queda como respaldo.
-        const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
+        // Preferir la service_role key (solo servidor). La integración de Vercel la publica como
+        // kamatera_SUPABASE_SERVICE_ROLE_KEY; SUPABASE_KEY (anónima) queda como último respaldo.
+        const supabaseKey = process.env.SUPABASE_SERVICE_KEY
+            || process.env.kamatera_SUPABASE_SERVICE_ROLE_KEY
+            || process.env.SUPABASE_KEY;
 
         if (!supabaseUrl || !supabaseKey) {
             throw new Error('Error: SUPABASE_URL y SUPABASE_KEY no están configurados en las variables de entorno');
