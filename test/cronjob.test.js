@@ -110,3 +110,138 @@ test('sin CRONJOB_API_KEY: 503 con mensaje claro', async () => {
     await assert.rejects(listarCrons(), (e) => e.status === 503 && /CRONJOB_API_KEY/.test(e.message));
     process.env.CRONJOB_API_KEY = guardada;
 });
+
+/* ---------- Creación de crons ---------- */
+
+const { armarCreacion, crearCrones, sumarMinutos, textoDias, tipoDeUrl } = await import('../src/cronjob.js');
+const ORIGEN = { origen: 'https://kamatera.vercel.app', timezone: 'America/Argentina/Buenos_Aires', folderId: 7 };
+
+test('sumarMinutos: 2 minutos después, y corre los días si cruza la medianoche', () => {
+    assert.deepEqual(sumarMinutos({ dias: [1, 2], hora: 23, minuto: 0 }, 2), { dias: [1, 2], hora: 23, minuto: 2 });
+    assert.deepEqual(sumarMinutos({ dias: [1, 2], hora: 23, minuto: 59 }, 2), { dias: [2, 3], hora: 0, minuto: 1 });
+    assert.deepEqual(sumarMinutos({ dias: [6, 0], hora: 23, minuto: 58 }, 2), { dias: [0, 1], hora: 0, minuto: 0 });
+});
+
+test('textoDias y tipoDeUrl', () => {
+    assert.equal(textoDias([1, 2, 3, 4]), 'Lun a Jue');
+    assert.equal(textoDias([5, 6]), 'Vie y Sáb');
+    assert.equal(textoDias([-1]), 'Todos los días');
+    assert.equal(tipoDeUrl('https://x.com/api/cron/apagado?cpu=8'), 'apagado');
+    assert.equal(tipoDeUrl('https://x.com/api/cron/configurar?cpu=8'), 'configurar');
+    assert.equal(tipoDeUrl('https://x.com/api/cron/encendido'), 'encendido');
+    assert.equal(tipoDeUrl('https://x.com/otra'), 'otro');
+});
+
+test('apagado con CPU: crea DOS crons, configurar a la hora y apagar 2 minutos después', () => {
+    const [cfg, off] = armarCreacion({ tipo: 'apagado', dias: [1, 2, 3, 4], hora: 23, minuto: 0, cpu: '12' }, ORIGEN);
+    assert.equal(cfg.url, 'https://kamatera.vercel.app/api/cron/configurar?cpu=12T');
+    assert.deepEqual([cfg.schedule.hours, cfg.schedule.minutes, cfg.schedule.wdays], [[23], [0], [1, 2, 3, 4]]);
+    assert.equal(off.url, 'https://kamatera.vercel.app/api/cron/apagado');
+    assert.deepEqual([off.schedule.hours, off.schedule.minutes, off.schedule.wdays], [[23], [2], [1, 2, 3, 4]]);
+    assert.match(cfg.titulo, /^Apagado Lun a Jue 23:00 - configurar/);
+    assert.match(off.titulo, /^Apagado Lun a Jue 23:02 - apagar/);
+    assert.equal(cfg.folderId, 7);
+    assert.equal(cfg.schedule.timezone, 'America/Argentina/Buenos_Aires');
+});
+
+test('apagado a las 23:59: el segundo cron cae a las 00:01 del día siguiente', () => {
+    const [, off] = armarCreacion({ tipo: 'apagado', dias: [1, 2, 3, 4], hora: 23, minuto: 59, cpu: '8' }, ORIGEN);
+    assert.deepEqual([off.schedule.hours, off.schedule.minutes, off.schedule.wdays], [[0], [1], [2, 3, 4, 5]]);
+});
+
+test('apagado sin CPU/RAM: un solo cron; encendido: uno; configurar solo: uno con parámetros', () => {
+    assert.equal(armarCreacion({ tipo: 'apagado', dias: [5], hora: 22, minuto: 0 }, ORIGEN).length, 1);
+    const [on] = armarCreacion({ tipo: 'encendido', dias: [-1], hora: 9, minuto: 0, cpu: '8' }, ORIGEN);
+    assert.equal(on.url, 'https://kamatera.vercel.app/api/cron/encendido'); // sin parámetros
+    assert.deepEqual(on.schedule.wdays, [-1]);
+    const [cfg] = armarCreacion({ tipo: 'configurar', dias: [1], hora: 8, minuto: 30, cpu: '20', ram: '16384' }, ORIGEN);
+    assert.equal(cfg.url, 'https://kamatera.vercel.app/api/cron/configurar?cpu=20T&ram=16384');
+    assert.match(cfg.titulo, /^Configurar /);
+});
+
+test('creación: valores inválidos dan 400', () => {
+    for (const d of [
+        { tipo: 'borrar', dias: [1], hora: 1, minuto: 0 },
+        { tipo: 'apagado', dias: [], hora: 1, minuto: 0 },
+        { tipo: 'apagado', dias: [1], hora: 24, minuto: 0 },
+        { tipo: 'apagado', dias: [1], hora: 1, minuto: 60 },
+        { tipo: 'apagado', dias: [1], hora: 1, minuto: 0, cpu: '99' },
+        { tipo: 'apagado', dias: [1], hora: 1, minuto: 0, ram: '5' },
+        { tipo: 'configurar', dias: [1], hora: 1, minuto: 0 },
+    ]) {
+        assert.throws(() => armarCreacion(d, ORIGEN), (e) => e.status === 400, JSON.stringify(d));
+    }
+});
+
+test('crearCrones manda PUT /jobs con el token de servicio en el header y la carpeta del modelo', async () => {
+    process.env.TOKEN = 'token-de-servicio';
+    const puts = [];
+    let id = 100;
+    const base = globalThis.fetch;
+    globalThis.fetch = async (url, opts = {}) => {
+        if (opts.method === 'PUT') { puts.push({ url: String(url), body: JSON.parse(opts.body) }); return new Response(JSON.stringify({ jobId: id++ }), { status: 200 }); }
+        return base(url, opts);
+    };
+    jobs[0].folderId = 54531;
+    const creados = await crearCrones({ tipo: 'apagado', dias: [5], hora: 23, minuto: 0, cpu: '8' });
+    assert.equal(creados.length, 2);
+    assert.deepEqual(creados.map((c) => c.id), [100, 101]);
+    assert.match(puts[0].url, /\/jobs$/);
+    const job = puts[0].body.job;
+    assert.equal(job.extendedData.headers.token, 'token-de-servicio');
+    assert.equal(job.folderId, 54531);
+    assert.equal(job.requestMethod, 0);
+    assert.equal(job.enabled, true);
+    assert.equal(job.url, 'https://kamatera.vercel.app/api/cron/configurar?cpu=8T');
+});
+
+/* ---------- Conversión de los apagados existentes ---------- */
+
+const { planificarConversion } = await import('../src/cronjob.js');
+
+const cron = (o) => ({
+    id: 1, tipo: 'apagado', titulo: 'Apagado Lun-Jue 11:00 PM', habilitado: true, folderId: 5,
+    url: 'https://kamatera.vercel.app/api/cron/apagado?cpu=12',
+    schedule: { timezone: 'America/Argentina/Buenos_Aires', expiresAt: 0, hours: [23], minutes: [0], mdays: [-1], months: [-1], wdays: [1, 2, 3, 4] },
+    ...o,
+});
+
+test('conversión: el apagado con cpu se divide en configurar (misma hora) y apagar 2 minutos después', () => {
+    const [p] = planificarConversion([cron({})]);
+    assert.equal(p.configurar.url, 'https://kamatera.vercel.app/api/cron/configurar?cpu=12T');
+    assert.deepEqual([p.configurar.schedule.hours, p.configurar.schedule.minutes, p.configurar.schedule.wdays], [[23], [0], [1, 2, 3, 4]]);
+    assert.equal(p.configurar.folderId, 5);
+    assert.equal(p.apagar.url, 'https://kamatera.vercel.app/api/cron/apagado');
+    assert.deepEqual([p.apagar.schedule.hours, p.apagar.schedule.minutes, p.apagar.schedule.wdays], [[23], [2], [1, 2, 3, 4]]);
+    assert.equal(p.apagar.titulo, 'Apagado Lun-Jue 11:00 PM - apagar');
+});
+
+test('conversión: 23:59 pasa a 00:01 del día siguiente (corre los días)', () => {
+    const [p] = planificarConversion([cron({ schedule: { ...cron({}).schedule, minutes: [59] } })]);
+    assert.deepEqual([p.apagar.schedule.hours, p.apagar.schedule.minutes, p.apagar.schedule.wdays], [[0], [1], [2, 3, 4, 5]]);
+    // el de configuración se queda a las 23:59 de los mismos días
+    assert.deepEqual([p.configurar.schedule.minutes, p.configurar.schedule.wdays], [[59], [1, 2, 3, 4]]);
+});
+
+test('conversión: domingo 23:59 pasa al lunes; los pausados siguen pausados', () => {
+    const [p] = planificarConversion([cron({ habilitado: false, schedule: { ...cron({}).schedule, minutes: [59], wdays: [0] } })]);
+    assert.deepEqual(p.apagar.schedule.wdays, [1]);
+    assert.equal(p.configurar.habilitado, false);
+});
+
+test('conversión: se omiten los que no traen cpu, con cpu inválida o con varios horarios', () => {
+    const plan = planificarConversion([
+        cron({ url: 'https://kamatera.vercel.app/api/cron/apagado' }),
+        cron({ url: 'https://kamatera.vercel.app/api/cron/apagado?cpu=99' }),
+        cron({ schedule: { ...cron({}).schedule, hours: [22, 23] } }),
+        cron({ tipo: 'encendido', titulo: 'Encendido', url: 'https://kamatera.vercel.app/api/cron/encendido' }),
+    ]);
+    assert.equal(plan.length, 3); // el encendido ni aparece
+    assert.ok(plan.every((p) => p.omitido && !p.configurar));
+});
+
+test('editar el título: solo si sigue empezando con encendido/apagado/configurar', () => {
+    const actual = { titulo: 'Apagado x', habilitado: true, url: 'https://kamatera.vercel.app/api/cron/apagado', schedule: { timezone: 'x', expiresAt: 0, hours: [1], minutes: [0], mdays: [-1], months: [-1], wdays: [-1] } };
+    assert.equal(armarCambios(actual, { titulo: 'Apagado x - apagar' }).job.title, 'Apagado x - apagar');
+    assert.throws(() => armarCambios(actual, { titulo: 'Backup' }), (e) => e.status === 400);
+});

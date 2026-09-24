@@ -25,6 +25,7 @@ const rutas = {
     '/api/crons': 'crons.js',
     '/api/cron/encendido': 'cron/encendido.js',
     '/api/cron/apagado': 'cron/apagado.js',
+    '/api/cron/configurar': 'cron/configurar.js',
 };
 
 for (const [ruta, archivo] of Object.entries(rutas)) {

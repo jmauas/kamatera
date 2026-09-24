@@ -14,23 +14,29 @@ Este documento describe cómo configurar las tareas programadas usando cron-job.
 
 Ve a https://cron-job.org/en/signup/ y crea una cuenta gratuita.
 
-### 2. Cómo funciona el apagado por fases
+### 2. Cómo se programa el apagado: dos crons separados
 
-`/api/cron/apagado` se llama varias veces por noche y decide qué hacer en cada llamada
-(Vercel corta las funciones a los 60 s, por eso no se puede reducir la CPU, esperar y apagar en una sola):
+Vercel corta las funciones a los 60 s, así que reducir la CPU, esperar y apagar no cabe en una sola llamada.
+Cada apagado se arma con **dos crons**:
 
-| URL | Qué hace |
-|---|---|
-| `.../apagado?cpu=8` | Si el servidor tiene otra CPU, **solo la reduce** a 8T. Si ya tiene 8T, **lo apaga**. |
-| `.../apagado?cpu=8&final=1` | **Última fase**: apaga siempre, aunque la CPU no se haya podido reducir. |
-| `.../apagado` | Apaga directo. |
+| Cron | URL | Cuándo |
+|---|---|---|
+| Configurar | `/api/cron/configurar?cpu=8` (también `&ram=16384`) | a la hora T |
+| Apagar | `/api/cron/apagado` | **2 minutos después** (T+2) |
 
-- Si el servidor ya está apagado, no hace nada (responde 200 sin registrar).
-- Si falla algo, responde 502 y cron-job.org lo marca como fallido.
-- **La URL de la última fase de cada día lleva `&final=1`** (Jobs 3, 5, 9 y 12). Sin eso, si la reducción
-  de CPU fallara todas las veces, el servidor podría quedar encendido toda la noche.
+- `configurar` cambia la CPU/RAM; si el servidor ya tenía ese valor lo da por bueno.
+- `apagado` apaga directo; si ya estaba apagado no hace nada. Ignora cualquier parámetro.
+- Si algo falla, responden 502 y cron-job.org lo marca como fallido.
+- Si T+2 cruza la medianoche (ej. 23:59 → 00:01) el cron de apagado va al día siguiente.
 
-### 3. Crear los Cron Jobs
+**No hace falta crearlos a mano:** la página `/crons.html` (Configuración → "Administrar los crons")
+muestra el cronograma día por día, permite editar y pausar, y "＋ Agregar cron" crea el par completo.
+Requiere `CRONJOB_API_KEY` (Settings → API en cron-job.org).
+
+Para convertir los apagados viejos (`apagado?cpu=N`) en pares: `node scripts/convertir-apagados.js`
+(sin argumentos solo muestra el plan; con `--aplicar` lo ejecuta).
+
+### 3. Crear los Cron Jobs a mano (alternativa a la página)
 
 Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y configura cada uno de los siguientes:
 
@@ -69,7 +75,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 3: Apagado Lun-Jue 11:59 PM (Segunda fase)**
 
 - **Title:** `Apagado Lun-Jue 11:59 PM - Fase 2`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8&final=1`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
 - **Schedule (cron):** `59 23 * * 1-4`
 - **Request settings:**
   - Request method: `GET`
@@ -99,7 +105,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 5: Apagado Viernes 11:59 PM (Segunda fase)**
 
 - **Title:** `Apagado Viernes 11:59 PM - Fase 2`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4&final=1`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
 - **Schedule (cron):** `59 23 * * 5`
 - **Request settings:**
   - Request method: `GET`
@@ -159,7 +165,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 9: Apagado Sábado 11:59 PM (Tercera fase)**
 
 - **Title:** `Apagado Sábado 11:59 PM - Fase 3`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4&final=1`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=4`
 - **Schedule (cron):** `59 23 * * 6`
 - **Request settings:**
   - Request method: `GET`
@@ -204,7 +210,7 @@ Después de iniciar sesión, ve a **"Cronjobs"** → **"Create cronjob"** y conf
 #### 📅 **Job 12: Apagado Domingo 11:59 PM (Tercera fase)**
 
 - **Title:** `Apagado Domingo 11:59 PM - Fase 2`
-- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8&final=1`
+- **Address:** `https://kamatera.vercel.app/api/cron/apagado?cpu=8`
 - **Schedule (cron):** `59 23 * * 0`
 - **Request settings:**
   - Request method: `GET`

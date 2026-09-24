@@ -5,21 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#f4f1ef">
-  <title>Crons — Servidor EstudioMQ</title>
+  <title>Cronograma — Servidor EstudioMQ</title>
   <link rel="icon" href="/favicon.ico">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap wrap--ancho">
     <header class="top">
-      <h1>Crons del servidor</h1>
+      <h1>Cronograma del servidor</h1>
       <a class="btn btn--ghost btn--sm" href="/">← Volver al panel</a>
     </header>
 
     <!-- Acceso: la misma contraseña que la Configuración -->
     <section id="gate" class="card" hidden>
       <h2>Acceso protegido</h2>
-      <p class="muted">Ingresá la contraseña para ver y editar la programación.</p>
+      <p class="muted">Ingresá la contraseña para ver y editar el cronograma.</p>
       <button id="btnDesbloquear" class="btn btn--primary" type="button">Desbloquear</button>
     </section>
 
@@ -27,28 +27,35 @@
       <div class="barra">
         <p class="muted small" id="resumen"></p>
         <div class="barra__acc">
+          <button id="btnNuevo" class="btn btn--primary btn--sm" type="button">＋ Agregar cron</button>
           <button id="btnActualizar" class="btn btn--neutral btn--sm" type="button">Actualizar</button>
           <button id="btnBloquear" class="btn btn--ghost btn--sm" type="button">Bloquear</button>
         </div>
       </div>
 
+      <p class="muted small">
+        ▲ enciende · ⚙ cambia la configuración (CPU/RAM) · ▼ apaga. Un cron que corre varios días aparece en cada uno;
+        al editarlo o pausarlo cambia en todos. Horas de Buenos Aires.
+      </p>
+
       <section aria-labelledby="tSemana">
-        <h2 id="tSemana">Programación semanal</h2>
-        <p class="muted small">Horarios de cada día según los crons activos. ▲ enciende, ▼ apaga.</p>
+        <h2 id="tSemana" class="sr-only">Cronograma semanal</h2>
         <div id="semana" class="semana"></div>
       </section>
 
-      <section aria-labelledby="tLista">
-        <h2 id="tLista">Crons</h2>
-        <div id="lista" class="crons"></div>
+      <section id="especialesSec" aria-labelledby="tEsp" hidden>
+        <h2 id="tEsp">Otros horarios</h2>
+        <p class="muted small">Crons con un horario que no se puede ubicar en un día y hora concretos.</p>
+        <ul id="especiales" class="especiales"></ul>
       </section>
     </div>
   </div>
 
-  <!-- Editor de un cron -->
+  <!-- Editar un cron existente -->
   <dialog id="dlgCron" aria-labelledby="cronTitulo">
     <form id="cronForm" autocomplete="off">
       <h2 id="cronTitulo"></h2>
+      <p id="cronSub" class="muted small"></p>
 
       <fieldset class="dias">
         <legend>Días</legend>
@@ -66,9 +73,17 @@
         </label>
       </div>
 
-      <label class="field">URL
-        <input id="cronUrl" name="url" type="url" required>
-        <small class="muted">Ej.: <code>?cpu=8</code> reduce la CPU y <code>&amp;final=1</code> marca la última fase.</small>
+      <div id="cronCfg" class="fila2" hidden>
+        <label class="field">Procesadores
+          <select id="cronCpu"></select>
+        </label>
+        <label class="field">Memoria RAM
+          <select id="cronRam"></select>
+        </label>
+      </div>
+
+      <label id="cronUrlBloque" class="field" hidden>URL
+        <input id="cronUrl" name="url" type="url">
       </label>
 
       <p id="cronNota" class="muted small" hidden></p>
@@ -82,6 +97,56 @@
       <div class="dlg__acciones">
         <button class="btn btn--neutral" id="cronCancelar" type="button">Cancelar</button>
         <button class="btn btn--primary" type="submit">Guardar cambios</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Agregar un cron -->
+  <dialog id="dlgNuevo" aria-labelledby="nuevoTitulo">
+    <form id="nuevoForm" autocomplete="off">
+      <h2 id="nuevoTitulo">Agregar cron</h2>
+
+      <label class="field">¿Qué tiene que hacer?
+        <select id="nuevoTipo">
+          <option value="encendido">Encender el servidor</option>
+          <option value="apagado">Apagar el servidor</option>
+          <option value="configurar">Solo cambiar la configuración (CPU/RAM)</option>
+        </select>
+      </label>
+
+      <fieldset class="dias">
+        <legend>Días</legend>
+        <div id="nuevoDias" class="dias__chips"></div>
+      </fieldset>
+
+      <label class="field"><span id="nuevoHoraEtiqueta">Hora</span>
+        <input id="nuevoHora" type="time" required value="09:00">
+      </label>
+
+      <div id="nuevoCfgSwitch" hidden>
+        <label class="chequeo"><input type="checkbox" id="nuevoConCfg">
+          <span>Cambiar la configuración antes de apagar</span></label>
+      </div>
+
+      <div id="nuevoCfg" class="fila2" hidden>
+        <label class="field">Procesadores
+          <select id="nuevoCpu"></select>
+        </label>
+        <label class="field">Memoria RAM
+          <select id="nuevoRam"></select>
+        </label>
+      </div>
+
+      <p id="nuevoPrevia" class="prevista" aria-live="polite"></p>
+
+      <label class="field">Tu nombre
+        <input id="nuevoNombre" maxlength="60" required placeholder="Nombre">
+      </label>
+
+      <p id="nuevoError" class="error" role="alert" hidden></p>
+      <div class="dlg__acciones">
+        <button class="btn btn--neutral" id="nuevoCancelar" type="button">Cancelar</button>
+        <button class="btn btn--primary" type="submit" id="nuevoOk">Crear</button>
       </div>
     </form>
   </dialog>

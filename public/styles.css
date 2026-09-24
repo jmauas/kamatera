@@ -143,29 +143,34 @@ a.btn { text-decoration: none; }
 .barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .barra__acc { display: flex; gap: 8px; }
 
-.semana { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.wrap--ancho { max-width: 1240px; }
+.semana { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; align-items: start; }
 .dia { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
 .dia h3 { margin: 0 0 8px; font-size: 1rem; }
-.dia ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.ev { display: flex; gap: 8px; align-items: flex-start; padding: 6px 8px; border-radius: 8px; border-left: 4px solid; }
-.ev > span { display: flex; flex-direction: column; font-size: .9rem; }
-.ev small { color: var(--muted); font-size: .78rem; }
+.dia ul, .especiales, .ev-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ev {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; align-items: start;
+  padding: 6px 8px; border-radius: 8px; border-left: 4px solid var(--border);
+}
+.ev__txt { display: flex; flex-direction: column; font-size: .9rem; font-weight: 600; }
+.ev small { color: var(--muted); font-size: .78rem; font-weight: 400; }
+.ev small.error { font-weight: 600; }
 .ev__hora { font-variant-numeric: tabular-nums; }
+.ev__acc { grid-column: 1 / -1; display: flex; gap: 6px; margin-top: 4px; }
+.ev__btn {
+  font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; color: var(--text);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; min-height: 30px;
+}
+.ev__btn:hover { border-color: var(--primary); }
 .ev--on { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, transparent); }
 .ev--off { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
-.ev--pausa { opacity: .5; }
+.ev--cfg { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); }
+.ev--pausa { opacity: .55; }
 .dia .vacio { text-align: left !important; }
-
-.crons { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-.cron { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 6px; }
-.cron--pausa { opacity: .75; }
-.cron__cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.cron__cab h3 { margin: 0; font-size: 1rem; overflow-wrap: anywhere; }
-.cron__cab .badge { padding: 4px 10px; font-size: .8rem; flex: none; }
-.cron__sched { font-weight: 700; margin: 4px 0 0; }
-.cron__url { display: block; background: var(--bg); padding: 6px 8px; border-radius: 8px; font-size: .82rem; overflow-wrap: anywhere; }
-.cron__acc { display: flex; gap: 8px; margin-top: 6px; }
-.cron p { margin: 0; }
+.especial { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.especial p { margin: 0 0 8px; }
+.chequeo { display: flex; gap: 8px; align-items: center; margin: 10px 0; font-weight: 600; }
+.chequeo input { width: auto; min-height: 0; margin: 0; }
 
 .dias { border: 0; padding: 0; margin: 12px 0; }
 .dias legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
@@ -181,7 +186,7 @@ a.btn { text-decoration: none; }
 .fila2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .field small { display: block; font-weight: 400; margin-top: 4px; }
 .prevista { background: var(--bg); padding: 10px 12px; border-radius: 10px; font-weight: 600; margin: 8px 0; }
-#dlgCron { width: min(94vw, 560px); max-height: 92vh; overflow: auto; }
+#dlgCron, #dlgNuevo { width: min(94vw, 560px); max-height: 92vh; overflow: auto; }
 
 /* Progreso del apagado */
 .pasos { list-style: none; margin: 16px 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
